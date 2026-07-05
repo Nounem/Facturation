@@ -15,10 +15,19 @@ tâches Apex sont en attente ou en cours.
 
 ## Documentation
 
+- [Guide utilisateur](docs/guide-utilisateur.md)
 - [Architecture technique](docs/architecture-technique.md)
 - [Guide de validation et de déploiement](docs/guide-deploiement.md)
 - [Présentation du projet avec notes orateur](docs/presentation.md)
+- [Présentation PowerPoint](docs/presentation-facturation-salesforce.pptx)
 - [Audit du raccordement Chorus Pro](docs/chorus-pro-audit.md)
+
+Le PowerPoint est éditable et contient les notes orateur. Pour le régénérer :
+
+```bash
+python3 -m pip install -r requirements-docs.txt
+python3 scripts/generate_presentation.py
+```
 
 ## Modèle
 
@@ -76,8 +85,9 @@ une seconde facture pour la même opportunité et la même échéance.
 Le logo, la couleur du PDF et les mentions de règlement se configurent depuis
 l'action **Configurer le PDF** de l'entité de facturation.
 
-La livraison est protégée par 26 tests Apex couvrant les parcours du projet et
-environ 83 % des lignes de ses classes applicatives.
+La livraison du 5 juillet 2026 est protégée par 26 méthodes de test Apex : 100 %
+de réussite et 83 % de couverture sur le périmètre applicatif. Le run Salesforce
+de référence est `707KB000027XkfR`.
 
 ## Facturation électronique
 
@@ -92,3 +102,8 @@ contient déjà une première infrastructure Chorus Pro ; son audit et les écar
 à corriger sont documentés dans [docs/chorus-pro-audit.md](docs/chorus-pro-audit.md).
 Le connecteur final réutilisera ces credentials après sécurisation, Chorus Pro
 pour le secteur public et la Plateforme Agréée retenue pour le B2B privé.
+
+Calendrier officiel : réception obligatoire pour toutes les entreprises et
+émission pour les grandes entreprises/ETI au 1er septembre 2026 ; émission pour
+les PME et micro-entreprises au 1er septembre 2027. Un PDF ordinaire ne constitue
+pas à lui seul une facture électronique conforme.

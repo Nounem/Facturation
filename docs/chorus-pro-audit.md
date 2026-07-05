@@ -1,6 +1,6 @@
 # Audit du raccordement Chorus Pro
 
-Date de l’audit : 4 juillet 2026.
+Date de l’audit : 4 juillet 2026. Revue réglementaire mise à jour le 5 juillet 2026.
 
 ## Éléments existants dans l’organisation
 
@@ -24,6 +24,10 @@ Le module de facturation prépare et trace actuellement la e-facture sans effect
 
 Références officielles :
 
+- [Calendrier officiel de la facturation électronique](https://www.economie.gouv.fr/tout-savoir-sur-la-facturation-electronique-pour-les-entreprises)
+- [Facturation électronique et plateformes agréées](https://www.impots.gouv.fr/facturation-electronique-et-plateformes-agreees)
+- [Spécifications Chorus Pro mises à jour pour septembre 2026](https://portail.chorus-pro.gouv.fr/aife_documentation?id=kb_article_view&sysparm_article=KB0012631)
+- [Chorus Pro reste la plateforme de référence du secteur public](https://portail.chorus-pro.gouv.fr/aife_documentation?id=kb_article_view&sysparm_article=KB0012110)
 - [Spécifications externes Chorus Pro](https://portail.chorus-pro.gouv.fr/aife_documentation?id=kb_article_view&sysparm_article=KB0011471)
 - [Raccordement API/OAuth Chorus Pro](https://communaute.chorus-pro.gouv.fr/documentation/connection-to-chorus-pro/)
 - [Dépôt et suivi par API G2B](https://portail.chorus-pro.gouv.fr/aife_documentation?id=kb_article_view&sys_kb_id=055f29a13b758350278c8c8aa4e45adf)

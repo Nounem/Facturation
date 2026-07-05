@@ -3,6 +3,9 @@
 Version documentée : API Salesforce 65.0<br/>
 Public : architectes, développeurs Salesforce, administrateurs et équipe d’exploitation.
 
+État de référence : livraison du 5 juillet 2026, run de tests
+`707KB000027XkfR` — 100 % de réussite et 83 % de couverture du périmètre projet.
+
 ## 1. Objectif et périmètre
 
 L’application fournit un cycle de facturation natif dans Salesforce :
@@ -253,6 +256,16 @@ du connecteur déjà présent dans l’organisation sont détaillés dans
 
 Avant activation réelle, il faut valider : OAuth/PISTE, routes contractuelles,
 SIRET juridiques, XML EN 16931, profil Factur-X, PDF/A-3 et règles de reprise.
+
+Le calendrier officiel impose la capacité de réception à toutes les entreprises
+au 1er septembre 2026. À cette date, les grandes entreprises et ETI doivent aussi
+émettre ; cette obligation d’émission s’applique aux PME et micro-entreprises au
+1er septembre 2027. Un PDF ordinaire transmis par e-mail n’est pas une facture
+électronique conforme au sens de la réforme.
+
+Références : [calendrier du ministère de l’Économie](https://www.economie.gouv.fr/tout-savoir-sur-la-facturation-electronique-pour-les-entreprises),
+[plateformes agréées — impots.gouv.fr](https://www.impots.gouv.fr/facturation-electronique-et-plateformes-agreees) et
+[évolutions Chorus Pro 2026](https://portail.chorus-pro.gouv.fr/aife_documentation?id=kb_article_view&sysparm_article=KB0012631).
 
 ## 9. Tests
 

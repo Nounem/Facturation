@@ -1,5 +1,8 @@
 # Guide de déploiement
 
+Dernière preuve de livraison : déploiement `0AfKB00000DphNT0AZ`, tests
+`707KB000027XkfR`, 100 % de réussite et 83 % de couverture projet.
+
 ## 1. Stratégie
 
 Le dépôt impose une validation Salesforce avant toute écriture :

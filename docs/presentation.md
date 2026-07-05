@@ -177,7 +177,13 @@ Aujourd’hui :
 - génération et rattachement du document ;
 - statut, fournisseur, référence et erreurs historisés.
 
-Avant production : OAuth PISTE, contrat API, EN 16931 et Factur-X/PDF-A3.
+Calendrier officiel :
+
+- **1er septembre 2026** : réception pour tous ; émission grandes entreprises/ETI ;
+- **1er septembre 2027** : émission PME et micro-entreprises.
+
+Avant production : OAuth PISTE, contrat API, EN 16931 et Factur-X/PDF-A3. Un PDF
+ordinaire ne suffit pas à constituer une facture électronique conforme.
 
 <!--
 Notes orateur — 55 secondes
