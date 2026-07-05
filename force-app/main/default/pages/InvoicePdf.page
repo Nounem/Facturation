@@ -1,0 +1,165 @@
+<apex:page standardController="Invoice__c" extensions="InvoicePdfController"
+           renderAs="pdf" showHeader="false" sidebar="false" applyBodyTag="false"
+           standardStylesheets="false" language="fr">
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <style type="text/css">
+        @page { size: A4; margin: 11mm 12mm 15mm; }
+        html, body { margin: 0; background: #fff; color: #17202e; font-size: 8.3px; line-height: 1.42; }
+        * { font-family: Helvetica !important; }
+        table { border-spacing: 0; }
+        .accent { height: 5px; margin-bottom: 15px; font-size: 1px; line-height: 1px; }
+        .header { width: 100%; border-collapse: collapse; margin-bottom: 17px; }
+        .header td { vertical-align: top; }
+        .identity { width: 61%; }
+        .document { width: 39%; text-align: right; }
+        .doc-box { padding: 10px 12px 11px; color: #fff; }
+        .logo { display: block; max-width: 175px; max-height: 54px; margin-bottom: 8px; }
+        .seller-name { margin: 0 0 4px; font-size: 16px; font-weight: bold; line-height: 1.15; }
+        .seller-details { max-width: 310px; color: #5d6878; font-size: 7.7px; line-height: 1.5; }
+        .doc-kicker { color: #fff; font-size: 6.8px; font-weight: bold; letter-spacing: 1.4px; text-transform: uppercase; }
+        h1 { margin: 3px 0 2px; font-size: 30px; line-height: 1; letter-spacing: .8px; }
+        .doc-number { font-size: 12px; font-weight: bold; }
+        .original { display: inline-block; margin-top: 6px; padding: 3px 9px; border: 1px solid #d5dae1; color: #475467; font-size: 6.7px; font-weight: bold; letter-spacing: .7px; }
+        .overview { width: 100%; margin-bottom: 15px; border-collapse: separate; }
+        .overview td { vertical-align: top; }
+        .customer { width: 53%; padding: 12px 13px; background: #fff; border: 1px solid #cfd6df; border-top: 3px solid #0b5cab; }
+        .gap { width: 3%; }
+        .metadata { width: 44%; padding: 9px 12px; background: #f1f4f7; border: 1px solid #d7dde5; }
+        .label { margin-bottom: 6px; color: #667085; font-size: 6.7px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
+        .customer-name { margin-bottom: 4px; color: #101828; font-size: 12px; font-weight: bold; }
+        .subtle { color: #667085; }
+        .meta-row { width: 100%; border-bottom: 1px solid #e0e4e9; }
+        .meta-row:last-child { border-bottom: 0; }
+        .meta-row td { padding: 3.5px 0; }
+        .meta-row td:first-child { width: 53%; color: #667085; }
+        .meta-row td:last-child { width: 47%; text-align: right; font-weight: bold; }
+        .routing { margin: 0 0 13px; padding: 7px 10px; background: #f5f7fa; border-left: 3px solid #0b5cab; color: #475467; }
+        .routing strong { color: #101828; }
+        .lines { width: 100%; border-collapse: collapse; table-layout: fixed; -fs-table-paginate: paginate; }
+        .lines thead { display: table-header-group; }
+        .lines th { padding: 8px 5px; color: #fff; border-right: 1px solid rgba(255,255,255,.25); font-size: 6.6px; font-weight: bold; letter-spacing: .35px; text-align: right; text-transform: uppercase; }
+        .lines th:first-child { text-align: left; }
+        .lines td { padding: 8px 5px; border-bottom: 1px solid #e4e7ec; color: #344054; text-align: right; vertical-align: top; }
+        .lines td:first-child { color: #101828; text-align: left; font-weight: bold; }
+        .lines tbody tr:nth-child(even) { background: #f8fafc; }
+        .lines tr { page-break-inside: avoid; }
+        .settlement { width: 100%; margin-top: 14px; page-break-inside: avoid; }
+        .settlement td { vertical-align: top; }
+        .payment { width: 48%; padding: 11px 12px; background: #f7f9fb; border-left: 3px solid #0b5cab; }
+        .payment-title { margin-bottom: 3px; color: #101828; font-size: 10px; font-weight: bold; }
+        .payment-copy { color: #5d6878; font-size: 7.8px; }
+        .totals-gap { width: 5%; }
+        .totals-wrap { width: 47%; }
+        .totals { width: 100%; border-collapse: collapse; }
+        .totals td { padding: 5px 8px; border-bottom: 1px solid #e3e7ed; }
+        .totals td:first-child { color: #667085; }
+        .totals td:last-child { text-align: right; font-weight: bold; white-space: nowrap; }
+        .total-due td { padding: 9px 8px; color: #fff !important; border: 0; font-size: 11px; font-weight: bold; }
+        .legal { margin-top: 15px; padding: 9px 11px; background: #fafbfc; border: 1px solid #e7eaee; color: #596579; font-size: 7px; page-break-inside: avoid; }
+        .legal p { margin: 2px 0; }
+        .footer { margin-top: 11px; padding-top: 7px; border-top: 1px solid #dfe3e8; color: #697586; font-size: 6.8px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="accent" style="background-color: {!primaryColor};">&#160;</div>
+
+    <table class="header" width="100%">
+        <tr>
+            <td class="identity" width="61%">
+                <apex:outputPanel rendered="{!hasLogo}" layout="none"><img class="logo" src="{!logoUrl}" alt="Logo"/></apex:outputPanel>
+                <div class="seller-name" style="color: {!primaryColor};"><apex:outputText value="{!invoice.BillingEntity__r.Name}"/></div>
+                <div class="seller-details">
+                    <apex:outputText value="{!invoice.BillingEntity__r.Address__c}"/><br/>
+                    <apex:outputPanel rendered="{!NOT(ISBLANK(invoice.BillingEntity__r.Siret__c))}" layout="none">SIRET&nbsp;<apex:outputText value="{!invoice.BillingEntity__r.Siret__c}"/> · </apex:outputPanel>
+                    SIREN&nbsp;<apex:outputText value="{!invoice.BillingEntity__r.RegistrationNumber__c}"/>
+                    <apex:outputPanel rendered="{!NOT(ISBLANK(invoice.BillingEntity__r.VatNumber__c))}" layout="none"> · TVA&nbsp;<apex:outputText value="{!invoice.BillingEntity__r.VatNumber__c}"/></apex:outputPanel>
+                </div>
+            </td>
+            <td class="document" width="39%">
+                <div class="doc-box" style="background-color: {!primaryColor};">
+                    <div class="doc-kicker" style="color: #ffffff;">Document comptable</div>
+                    <h1 style="color: #ffffff;">FACTURE</h1>
+                    <div class="doc-number" style="color: #ffffff;"><apex:outputText value="{!invoice.InvoiceNumber__c}"/></div>
+                </div>
+                <div class="original">ORIGINAL · <apex:outputText value="{!originLabel}"/></div>
+            </td>
+        </tr>
+    </table>
+
+    <table class="overview" width="100%">
+        <tr>
+            <td class="customer" width="53%" style="border-top-color: {!primaryColor};">
+                <div class="label">Facturé à</div>
+                <div class="customer-name"><apex:outputText value="{!invoice.CustomerName__c}"/></div>
+                <apex:outputText value="{!invoice.BillingStreet__c}"/><br/>
+                <apex:outputText value="{!invoice.BillingPostalCode__c}"/> <apex:outputText value="{!invoice.BillingCity__c}"/><br/>
+                <apex:outputText value="{!invoice.BillingCountry__c}"/>
+                <apex:outputPanel rendered="{!NOT(ISBLANK(invoice.CustomerRegistrationNumber__c))}" layout="block" styleClass="subtle">SIREN&nbsp;: <apex:outputText value="{!invoice.CustomerRegistrationNumber__c}"/></apex:outputPanel>
+                <apex:outputPanel rendered="{!NOT(ISBLANK(invoice.CustomerTaxId__c))}" layout="block" styleClass="subtle">TVA&nbsp;: <apex:outputText value="{!invoice.CustomerTaxId__c}"/></apex:outputPanel>
+                <apex:outputPanel rendered="{!NOT(ISBLANK(invoice.DeliveryAddress__c))}" layout="block"><br/><strong>Adresse de livraison</strong><br/><apex:outputText value="{!invoice.DeliveryAddress__c}"/></apex:outputPanel>
+            </td>
+            <td class="gap" width="3%"></td>
+            <td class="metadata" width="44%">
+                <div class="label">Détails de la facture</div>
+                <table class="meta-row"><tr><td>Date d’émission</td><td><apex:outputText value="{0,date,dd/MM/yyyy}"><apex:param value="{!invoice.IssueDate__c}"/></apex:outputText></td></tr></table>
+                <table class="meta-row"><tr><td>Date de prestation</td><td><apex:outputText value="{0,date,dd/MM/yyyy}"><apex:param value="{!serviceDate}"/></apex:outputText></td></tr></table>
+                <table class="meta-row"><tr><td>Date d’échéance</td><td><apex:outputText value="{0,date,dd/MM/yyyy}"><apex:param value="{!invoice.DueDate__c}"/></apex:outputText></td></tr></table>
+                <apex:outputPanel rendered="{!hasBillingPeriod}" layout="none"><table class="meta-row"><tr><td>Période facturée</td><td><apex:outputText value="{0,date,dd/MM/yyyy}"><apex:param value="{!invoice.BillingPeriodStart__c}"/></apex:outputText><br/>au <apex:outputText value="{0,date,dd/MM/yyyy}"><apex:param value="{!invoice.BillingPeriodEnd__c}"/></apex:outputText></td></tr></table></apex:outputPanel>
+                <apex:outputPanel rendered="{!NOT(ISBLANK(invoice.CommitmentNumber__c))}" layout="none"><table class="meta-row"><tr><td>Commande / engagement</td><td><apex:outputText value="{!invoice.CommitmentNumber__c}"/></td></tr></table></apex:outputPanel>
+                <table class="meta-row"><tr><td>Nature</td><td><apex:outputText value="{!operationCategoryLabel}"/></td></tr></table>
+            </td>
+        </tr>
+    </table>
+
+    <apex:outputPanel rendered="{!invoice.RecipientType__c = 'PublicSector'}" layout="block" styleClass="routing" style="border-left-color: {!primaryColor};">
+        <strong>Routage Chorus Pro</strong> · SIRET destinataire&nbsp;<apex:outputText value="{!invoice.RecipientSiret__c}"/>
+        <apex:outputPanel rendered="{!NOT(ISBLANK(invoice.ServiceCode__c))}" layout="none"> · Service&nbsp;<apex:outputText value="{!invoice.ServiceCode__c}"/></apex:outputPanel>
+        <apex:outputPanel rendered="{!NOT(ISBLANK(invoice.BillingFramework__c))}" layout="none"> · Cadre&nbsp;<apex:outputText value="{!invoice.BillingFramework__c}"/></apex:outputPanel>
+    </apex:outputPanel>
+
+    <table class="lines" width="100%">
+        <thead><tr style="background-color: {!primaryColor};"><th width="39%">Désignation</th><th width="8%">Qté</th><th width="16%">Prix unitaire HT</th><th width="10%">Remise</th><th width="10%">TVA</th><th width="17%">Montant HT</th></tr></thead>
+        <tbody>
+            <apex:repeat value="{!lineViews}" var="line">
+                <tr><td><apex:outputText value="{!line.description}"/></td><td><apex:outputText value="{!line.quantityLabel}"/></td><td><apex:outputText value="{!line.unitPriceLabel}"/></td><td><apex:outputText value="{!line.discountLabel}"/></td><td><apex:outputText value="{!line.taxRateLabel}"/></td><td><apex:outputText value="{!line.netAmountLabel}"/></td></tr>
+            </apex:repeat>
+        </tbody>
+    </table>
+
+    <table class="settlement" width="100%">
+        <tr>
+            <td class="payment" width="48%" style="border-left-color: {!primaryColor};">
+                <div class="label">Règlement</div>
+                <div class="payment-title">À régler au plus tard le&nbsp;<apex:outputText value="{0,date,dd/MM/yyyy}"><apex:param value="{!invoice.DueDate__c}"/></apex:outputText></div>
+                <apex:outputPanel rendered="{!NOT(ISBLANK(invoice.BillingEntity__r.PaymentInstructions__c))}" layout="block" styleClass="payment-copy"><apex:outputText value="{!invoice.BillingEntity__r.PaymentInstructions__c}"/></apex:outputPanel>
+            </td>
+            <td class="totals-gap" width="5%"></td>
+            <td class="totals-wrap" width="47%">
+                <table class="totals" width="100%">
+                    <tr><td>Total HT</td><td><apex:outputText value="{!subtotalLabel}"/></td></tr>
+                    <apex:repeat value="{!taxSummaries}" var="tax"><tr><td>TVA <apex:outputText value="{!tax.rateLabel}"/></td><td><apex:outputText value="{!tax.taxAmountLabel}"/></td></tr></apex:repeat>
+                    <tr class="total-due" style="background-color: {!primaryColor};"><td>Total TTC</td><td><apex:outputText value="{!totalLabel}"/></td></tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <div class="legal">
+        <div class="label">Informations légales et conditions</div>
+        <p><strong>Escompte :</strong>&nbsp;<apex:outputText value="{!invoice.BillingEntity__r.EarlyPaymentTerms__c}"/></p>
+        <p><apex:outputText value="{!invoice.BillingEntity__r.LatePaymentPenaltyText__c}"/> Indemnité forfaitaire pour frais de recouvrement&nbsp;: <apex:outputText value="{!recoveryFeeLabel}"/>.</p>
+        <apex:outputPanel rendered="{!invoice.VatOnDebits__c}" layout="block"><strong>Option pour le paiement de la taxe d’après les débits.</strong></apex:outputPanel>
+    </div>
+
+    <div class="footer">
+        <strong><apex:outputText value="{!invoice.BillingEntity__r.Name}"/></strong>
+        <apex:outputPanel rendered="{!NOT(ISBLANK(invoice.BillingEntity__r.LegalForm__c))}" layout="none"> · <apex:outputText value="{!invoice.BillingEntity__r.LegalForm__c}"/></apex:outputPanel>
+        <apex:outputPanel rendered="{!NOT(ISNULL(invoice.BillingEntity__r.ShareCapital__c))}" layout="none"> au capital de <apex:outputText value="{!shareCapitalLabel}"/></apex:outputPanel>
+        <apex:outputPanel rendered="{!NOT(ISBLANK(invoice.BillingEntity__r.RcsCity__c))}" layout="none"> · RCS <apex:outputText value="{!invoice.BillingEntity__r.RcsCity__c}"/> <apex:outputText value="{!invoice.BillingEntity__r.RegistrationNumber__c}"/></apex:outputPanel>
+        <apex:outputPanel rendered="{!NOT(ISBLANK(invoice.BillingEntity__r.Email__c))}" layout="none"> · <apex:outputText value="{!invoice.BillingEntity__r.Email__c}"/></apex:outputPanel>
+    </div>
+</body>
+</html>
+</apex:page>

@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata"><fullName>TaxAmount__c</fullName><label>TVA</label><summarizedField>InvoiceLine__c.TaxAmount__c</summarizedField><summaryForeignKey>InvoiceLine__c.Invoice__c</summaryForeignKey><summaryOperation>Sum</summaryOperation><type>Summary</type></CustomField>

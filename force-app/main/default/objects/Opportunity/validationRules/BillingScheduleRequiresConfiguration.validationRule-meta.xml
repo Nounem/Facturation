@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>BillingScheduleRequiresConfiguration</fullName>
+    <active>true</active>
+    <errorConditionFormula>AND(BillingGenerationActive__c, OR(ISBLANK(BillingRule__c), ISBLANK(NextBillingDate__c)))</errorConditionFormula>
+    <errorMessage>Sélectionnez une règle et une prochaine date avant d’activer la facturation planifiée.</errorMessage>
+</ValidationRule>

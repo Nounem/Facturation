@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Suivi d'un dépôt de facture électronique vers Chorus Pro ou une plateforme agréée.</description>
+    <enableReports>true</enableReports>
+    <label>Transmission électronique</label>
+    <nameField><displayFormat>EINV-{000000}</displayFormat><label>Numéro de transmission</label><type>AutoNumber</type></nameField>
+    <pluralLabel>Transmissions électroniques</pluralLabel>
+    <sharingModel>ControlledByParent</sharingModel>
+</CustomObject>

@@ -1,0 +1,13 @@
+{
+  "orgName": "Facturation Demo",
+  "edition": "Enterprise",
+  "features": ["Quotes"],
+  "settings": {
+    "lightningExperienceSettings": {
+      "enableS1DesktopEnabled": true
+    },
+    "quoteSettings": {
+      "enableQuote": true
+    }
+  }
+}

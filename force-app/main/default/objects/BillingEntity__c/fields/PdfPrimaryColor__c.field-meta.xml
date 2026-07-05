@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata"><fullName>PdfPrimaryColor__c</fullName><defaultValue>&quot;#0B5CAB&quot;</defaultValue><description>Couleur principale du PDF au format hexadécimal #RRGGBB.</description><label>Couleur principale PDF</label><length>7</length><required>false</required><type>Text</type></CustomField>

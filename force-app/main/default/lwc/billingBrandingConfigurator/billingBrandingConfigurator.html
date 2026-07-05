@@ -1,0 +1,25 @@
+<template>
+    <lightning-quick-action-panel header="Identité visuelle des factures">
+        <template if:true={isLoading}><lightning-spinner alternative-text="Chargement"></lightning-spinner></template>
+        <div class="content">
+            <p class="intro">Le logo et la couleur seront appliqués aux prochains PDF de {config.entityName}.</p>
+            <section class="setting">
+                <div class="setting-copy"><h2>Logo</h2><p>PNG ou JPG, idéalement horizontal et sur fond transparent.</p></div>
+                <template if:true={hasLogo}>
+                    <div class="logo-preview"><img src={config.logoPreviewUrl} alt="Logo sélectionné"/><span>{config.logoFileName}</span></div>
+                    <lightning-button label="Retirer" onclick={handleClearLogo} disabled={isLoading}></lightning-button>
+                </template>
+                <lightning-file-upload label="Choisir un logo" name="logoUploader" record-id={recordId} accept={acceptedFormats} onuploadfinished={handleUploadFinished} disabled={isLoading}></lightning-file-upload>
+            </section>
+            <section class="setting">
+                <div class="setting-copy"><h2>Couleur principale</h2><p>Utilisée pour le titre, les en-têtes et les accents du document.</p></div>
+                <div class="color-row">
+                    <input class="color-picker" type="color" value={primaryColor} onchange={handleColorChange} aria-label="Choisir la couleur principale"/>
+                    <lightning-input label="Code hexadécimal" value={primaryColor} maxlength="7" onchange={handleColorChange}></lightning-input>
+                    <lightning-button label="Enregistrer" variant="brand" onclick={handleSaveColor} disabled={isLoading}></lightning-button>
+                </div>
+            </section>
+        </div>
+        <div slot="footer"><lightning-button label="Fermer" onclick={handleClose}></lightning-button></div>
+    </lightning-quick-action-panel>
+</template>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Compteur transactionnel utilisé lors de l'émission d'un document.</description>
+    <enableReports>false</enableReports>
+    <label>Séquence de numérotation</label>
+    <nameField>
+        <label>Clé de séquence</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Séquences de numérotation</pluralLabel>
+    <sharingModel>ReadWrite</sharingModel>
+</CustomObject>

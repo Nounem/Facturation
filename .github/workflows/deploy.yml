@@ -1,0 +1,109 @@
+name: Validate and deploy Salesforce
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: GitHub Environment contenant le secret SFDX_AUTH_URL
+        required: true
+        type: choice
+        options:
+          - sandbox
+          - production
+      confirmation:
+        description: Saisir DEPLOY pour déployer après validation, sinon seule la validation est exécutée
+        required: true
+        default: VALIDATE
+        type: string
+      initialize_reference_data:
+        description: Créer la configuration de démonstration et les règles de référence
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: salesforce-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validation Salesforce sans écriture
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Récupérer la version Git validée
+        uses: actions/checkout@v4
+
+      - name: Installer Salesforce CLI
+        run: npm install --global @salesforce/cli
+
+      - name: Authentifier l’organisation cible
+        shell: bash
+        env:
+          SFDX_AUTH_URL: ${{ secrets.SFDX_AUTH_URL }}
+        run: |
+          printf '%s' "$SFDX_AUTH_URL" > "$RUNNER_TEMP/sfdx-auth-url.txt"
+          sf org login sfdx-url --sfdx-url-file "$RUNNER_TEMP/sfdx-auth-url.txt" --alias ci-target
+
+      - name: Vérifier le projet et exécuter les tests ciblés
+        run: >-
+          sf project deploy validate
+          --source-dir force-app
+          --target-org ci-target
+          --test-level RunSpecifiedTests
+          --tests BillingCalculationServiceTest
+          --tests BillingBrandingControllerTest
+          --tests BillingRuleEngineTest
+          --tests BillingRunSchedulerTest
+          --tests BillingWorkspaceControllerTest
+          --tests InvoiceServiceTest
+          --wait 60
+          --concise
+
+  deploy:
+    name: Déploiement après validation
+    if: ${{ inputs.confirmation == 'DEPLOY' }}
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Récupérer exactement la version validée
+        uses: actions/checkout@v4
+
+      - name: Installer Salesforce CLI
+        run: npm install --global @salesforce/cli
+
+      - name: Authentifier l’organisation cible
+        shell: bash
+        env:
+          SFDX_AUTH_URL: ${{ secrets.SFDX_AUTH_URL }}
+        run: |
+          printf '%s' "$SFDX_AUTH_URL" > "$RUNNER_TEMP/sfdx-auth-url.txt"
+          sf org login sfdx-url --sfdx-url-file "$RUNNER_TEMP/sfdx-auth-url.txt" --alias ci-target
+
+      - name: Déployer et rejouer les tests de sécurité
+        run: >-
+          sf project deploy start
+          --source-dir force-app
+          --target-org ci-target
+          --test-level RunSpecifiedTests
+          --tests BillingCalculationServiceTest
+          --tests BillingBrandingControllerTest
+          --tests BillingRuleEngineTest
+          --tests BillingRunSchedulerTest
+          --tests BillingWorkspaceControllerTest
+          --tests InvoiceServiceTest
+          --wait 60
+          --concise
+
+      - name: Attribuer le jeu de permissions au compte de déploiement
+        run: sf org assign permset --name Facturation_Admin --target-org ci-target
+
+      - name: Initialiser les données de référence facultatives
+        if: ${{ inputs.initialize_reference_data }}
+        run: |
+          sf apex run --target-org ci-target --file scripts/apex/setup.apex
+          sf apex run --target-org ci-target --file scripts/apex/configureBillingRules.apex

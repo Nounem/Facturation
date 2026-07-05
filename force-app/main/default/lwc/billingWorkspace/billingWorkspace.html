@@ -1,0 +1,206 @@
+<template>
+    <section class="workspace">
+        <template if:true={isLoading}>
+            <div class="loading-layer" role="status">
+                <lightning-spinner alternative-text="Traitement en cours" size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <template if:false={hasRecord}>
+            <div class="empty-state standalone">
+                <lightning-icon icon-name="utility:info" size="small"></lightning-icon>
+                <h2>Composant réservé aux opportunités</h2>
+                <p>Ajoutez cet espace de travail à une page Lightning Opportunité.</p>
+            </div>
+        </template>
+
+        <template if:true={hasRecord}>
+            <header class="hero">
+                <div class="hero-copy">
+                    <div class="eyebrow">ESPACE DE FACTURATION</div>
+                    <h1>Devis &amp; factures</h1>
+                    <p class="opportunity-name">{opportunityName}</p>
+                </div>
+                <div class="hero-actions">
+                    <template if:true={lastUpdatedLabel}>
+                        <span class="updated">Actualisé à {lastUpdatedLabel}</span>
+                    </template>
+                    <lightning-button-icon
+                        icon-name="utility:refresh"
+                        variant="border-inverse"
+                        alternative-text="Actualiser"
+                        title="Actualiser"
+                        onclick={handleManualRefresh}
+                        disabled={isBusy}>
+                    </lightning-button-icon>
+                    <lightning-button
+                        label="Facture directe"
+                        icon-name="utility:add"
+                        variant="outline-brand"
+                        onclick={handleCreateInvoice}
+                        disabled={isBusy}>
+                    </lightning-button>
+                    <lightning-button
+                        label="Nouveau devis"
+                        icon-name="utility:add"
+                        variant="brand"
+                        onclick={handleCreateQuote}
+                        disabled={isBusy}>
+                    </lightning-button>
+                </div>
+            </header>
+
+            <template if:true={errorMessage}>
+                <div class="error-banner" role="alert">
+                    <lightning-icon icon-name="utility:error" size="x-small" variant="inverse"></lightning-icon>
+                    <span>{errorMessage}</span>
+                    <button class="close-error" onclick={clearError} title="Fermer">×</button>
+                </div>
+            </template>
+
+            <div class="metrics" aria-label="Indicateurs">
+                <article class="metric metric-blue">
+                    <div class="metric-icon"><lightning-icon icon-name="standard:quotes" size="small"></lightning-icon></div>
+                    <div><span class="metric-value">{quoteCount}</span><span class="metric-label">Devis</span></div>
+                </article>
+                <article class="metric metric-green">
+                    <div class="metric-icon"><lightning-icon icon-name="utility:success" size="small"></lightning-icon></div>
+                    <div><span class="metric-value">{acceptedQuoteCount}</span><span class="metric-label">Acceptés</span></div>
+                </article>
+                <article class="metric metric-purple">
+                    <div class="metric-icon"><lightning-icon icon-name="standard:orders" size="small"></lightning-icon></div>
+                    <div><span class="metric-value">{invoiceCount}</span><span class="metric-label">Factures</span></div>
+                </article>
+                <article class="metric metric-orange">
+                    <div class="metric-icon"><lightning-icon icon-name="utility:money" size="small"></lightning-icon></div>
+                    <div>
+                        <span class="metric-value amount">
+                            <lightning-formatted-number value={outstandingBalance} format-style="currency" currency-code={currencyCode}></lightning-formatted-number>
+                        </span>
+                        <span class="metric-label">Solde à encaisser</span>
+                    </div>
+                </article>
+            </div>
+
+            <details class="schedule-panel">
+                <summary>
+                    <span><lightning-icon icon-name="utility:date_input" size="x-small"></lightning-icon> Règle et automatisation</span>
+                    <span class="schedule-hint">Ponctuelle, mensuelle, trimestrielle ou annuelle</span>
+                </summary>
+                <lightning-record-edit-form
+                    record-id={recordId}
+                    object-api-name="Opportunity"
+                    onsuccess={handleScheduleSaved}
+                    onerror={handleScheduleError}>
+                    <lightning-messages></lightning-messages>
+                    <div class="schedule-fields">
+                        <lightning-input-field field-name="BillingRule__c"></lightning-input-field>
+                        <lightning-input-field field-name="NextBillingDate__c"></lightning-input-field>
+                        <lightning-input-field field-name="BillingGenerationActive__c"></lightning-input-field>
+                        <lightning-button type="submit" label="Enregistrer la planification" variant="brand" disabled={isBusy}></lightning-button>
+                    </div>
+                </lightning-record-edit-form>
+            </details>
+
+            <section class="content-card">
+                <div class="toolbar">
+                    <nav class="view-tabs" aria-label="Type de document">
+                        <button class={quotesTabClass} data-view="quotes" onclick={handleViewChange} aria-selected={isQuotesActive}>
+                            Devis <span class="count">{quoteCount}</span>
+                        </button>
+                        <button class={invoicesTabClass} data-view="invoices" onclick={handleViewChange} aria-selected={isInvoicesActive}>
+                            Factures <span class="count">{invoiceCount}</span>
+                        </button>
+                    </nav>
+                    <div class="search-box">
+                        <lightning-input
+                            type="search"
+                            variant="label-hidden"
+                            label="Rechercher"
+                            placeholder={searchPlaceholder}
+                            value={searchTerm}
+                            onchange={handleSearch}>
+                        </lightning-input>
+                    </div>
+                </div>
+
+                <template if:true={isQuotesActive}>
+                    <div class="list-header quote-grid" aria-hidden="true">
+                        <span>Devis</span><span>Statut</span><span>Expiration</span><span class="align-right">Total TTC</span><span></span>
+                    </div>
+                    <template if:true={hasFilteredQuotes}>
+                        <div class="records-list">
+                            <template for:each={filteredQuotes} for:item="quote">
+                                <article key={quote.Id} class="record-row quote-grid">
+                                    <div class="record-primary">
+                                        <button class="record-link" data-id={quote.Id} onclick={handleOpenQuote}>{quote.displayNumber}</button>
+                                        <span class="record-subtitle">{quote.Name}</span>
+                                    </div>
+                                    <div><span class={quote.statusClass}>{quote.statusLabel}</span></div>
+                                    <div class="record-data"><span class="mobile-label">Expiration</span><lightning-formatted-date-time value={quote.ExpirationDate} year="numeric" month="short" day="2-digit"></lightning-formatted-date-time></div>
+                                    <div class="record-data align-right"><span class="mobile-label">Total TTC</span><strong><lightning-formatted-number value={quote.displayTotal} format-style="currency" currency-code={currencyCode}></lightning-formatted-number></strong></div>
+                                    <div class="row-actions">
+                                        <lightning-button-icon icon-name="utility:preview" variant="border" alternative-text="Ouvrir" title="Ouvrir" data-id={quote.Id} onclick={handleOpenQuote}></lightning-button-icon>
+                                        <template if:true={quote.canConvert}>
+                                            <lightning-button label="Facturer" icon-name="utility:forward" variant="brand-outline" data-id={quote.Id} onclick={handleConvertQuote} disabled={isBusy}></lightning-button>
+                                        </template>
+                                    </div>
+                                </article>
+                            </template>
+                        </div>
+                    </template>
+                    <template if:false={hasFilteredQuotes}>
+                        <div class="empty-state">
+                            <lightning-icon icon-name="standard:quotes" size="large"></lightning-icon>
+                            <h2>{quoteEmptyTitle}</h2>
+                            <template if:false={hasSearchTerm}><p>Créez un devis à partir des produits de cette opportunité.</p><lightning-button label="Créer le premier devis" variant="brand" onclick={handleCreateQuote} disabled={isBusy}></lightning-button></template>
+                            <template if:true={hasSearchTerm}><p>Essayez un numéro, un nom ou un autre statut.</p></template>
+                        </div>
+                    </template>
+                </template>
+
+                <template if:true={isInvoicesActive}>
+                    <div class="list-header invoice-grid" aria-hidden="true">
+                        <span>Facture</span><span>Statut</span><span>Échéance</span><span class="align-right">Total TTC</span><span class="align-right">Solde</span><span></span>
+                    </div>
+                    <template if:true={hasFilteredInvoices}>
+                        <div class="records-list">
+                            <template for:each={filteredInvoices} for:item="invoice">
+                                <article key={invoice.Id} class="record-row invoice-grid">
+                                    <div class="record-primary"><button class="record-link" data-id={invoice.Id} onclick={handleOpenInvoice}>{invoice.displayNumber}</button><span class="record-subtitle">{invoice.sourceLabel}</span></div>
+                                    <div><span class={invoice.statusClass}>{invoice.statusLabel}</span></div>
+                                    <div class="record-data"><span class="mobile-label">Échéance</span><lightning-formatted-date-time value={invoice.DueDate__c} year="numeric" month="short" day="2-digit"></lightning-formatted-date-time></div>
+                                    <div class="record-data align-right"><span class="mobile-label">Total TTC</span><strong><lightning-formatted-number value={invoice.TotalAmount__c} format-style="currency" currency-code={currencyCode}></lightning-formatted-number></strong></div>
+                                    <div class="record-data align-right balance"><span class="mobile-label">Solde</span><strong><lightning-formatted-number value={invoice.BalanceDue__c} format-style="currency" currency-code={currencyCode}></lightning-formatted-number></strong></div>
+                                    <div class="row-actions">
+                                        <lightning-button-icon icon-name="utility:preview" variant="border" alternative-text="Ouvrir" title="Ouvrir" data-id={invoice.Id} onclick={handleOpenInvoice}></lightning-button-icon>
+                                        <template if:true={invoice.canIssue}><lightning-button label="Émettre" variant="brand" data-id={invoice.Id} onclick={handleIssueInvoice} disabled={isBusy}></lightning-button></template>
+                                        <template if:true={invoice.canGenerateDocuments}>
+                                            <lightning-button label="PDF" icon-name="utility:download" variant="brand-outline" data-id={invoice.Id} onclick={handleGeneratePdf} disabled={isBusy}></lightning-button>
+                                            <lightning-button label="E-facture" icon-name="utility:send" data-id={invoice.Id} onclick={handlePrepareElectronicInvoice} disabled={isBusy}></lightning-button>
+                                        </template>
+                                    </div>
+                                </article>
+                            </template>
+                        </div>
+                    </template>
+                    <template if:false={hasFilteredInvoices}>
+                        <div class="empty-state">
+                            <lightning-icon icon-name="standard:orders" size="large"></lightning-icon>
+                            <h2>{invoiceEmptyTitle}</h2>
+                            <template if:false={hasSearchTerm}>
+                                <p>Créez une facture directement depuis les produits, sans passer par un devis.</p>
+                                <lightning-button label="Créer une facture directe" variant="brand" onclick={handleCreateInvoice} disabled={isBusy}></lightning-button>
+                            </template>
+                            <template if:true={hasSearchTerm}><p>Essayez un numéro ou un autre statut.</p></template>
+                        </div>
+                    </template>
+                </template>
+            </section>
+
+            <template if:true={isRefreshing}>
+                <div class="refresh-indicator"><lightning-spinner alternative-text="Actualisation" size="small"></lightning-spinner><span>Actualisation…</span></div>
+            </template>
+        </template>
+    </section>
+</template>

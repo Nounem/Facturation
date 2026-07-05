@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata"><fullName>PdfPrimaryColorFormat</fullName><active>true</active><errorConditionFormula>AND(NOT(ISBLANK(PdfPrimaryColor__c)), NOT(REGEX(PdfPrimaryColor__c, &quot;^#[0-9A-Fa-f]{6}$&quot;)))</errorConditionFormula><errorDisplayField>PdfPrimaryColor__c</errorDisplayField><errorMessage>Utilisez une couleur hexadécimale au format #RRGGBB.</errorMessage></ValidationRule>

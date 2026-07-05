@@ -1,0 +1,21 @@
+# Salesforce CLI local state and credentials
+.sf/
+.sfdx/
+
+# IDE and operating system
+.vscode/
+.idea/
+.DS_Store
+
+# Dependencies, tests and generated reports
+node_modules/
+coverage/
+test-results/
+*.log
+
+# Authentication and local environment files
+.env
+.env.*
+auth*.txt
+*.key
+*.pem

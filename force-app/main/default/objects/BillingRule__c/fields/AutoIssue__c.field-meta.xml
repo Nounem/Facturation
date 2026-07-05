@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata"><fullName>AutoIssue__c</fullName><defaultValue>false</defaultValue><description>Émet et verrouille automatiquement les factures générées par le traitement planifié.</description><label>Émission automatique</label><type>Checkbox</type></CustomField>

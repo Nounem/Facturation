@@ -1,0 +1,11 @@
+.content { min-height: 20rem; }
+.intro { margin: 0 0 1rem; color: #5c5c5c; }
+.setting { padding: 1rem 0; border-top: 1px solid #e5e5e5; }
+.setting-copy h2 { margin: 0; color: #032d60; font-size: 1rem; font-weight: 700; }
+.setting-copy p { margin: .2rem 0 .8rem; color: #5c5c5c; }
+.logo-preview { display: flex; align-items: center; gap: .75rem; margin-bottom: .75rem; padding: .75rem; border: 1px solid #dde3ec; border-radius: .5rem; background: #f8fafc; }
+.logo-preview img { width: 8rem; height: 3.5rem; object-fit: contain; object-position: left center; }
+.logo-preview span { color: #444; font-size: .8rem; }
+.color-row { display: grid; grid-template-columns: 3.5rem minmax(10rem,1fr) auto; align-items: end; gap: .75rem; }
+.color-picker { width: 3.5rem; height: 2.15rem; padding: .1rem; border: 1px solid #c9c9c9; border-radius: .25rem; background: white; cursor: pointer; }
+@media (max-width: 480px) { .color-row { grid-template-columns: 3.5rem 1fr; } .color-row lightning-button { grid-column: 1 / -1; } }

@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata"><fullName>BillingEntity__c</fullName><deleteConstraint>SetNull</deleteConstraint><label>Entité de facturation</label><referenceTo>BillingEntity__c</referenceTo><relationshipLabel>Règles de facturation</relationshipLabel><relationshipName>BillingRules</relationshipName><required>false</required><type>Lookup</type></CustomField>

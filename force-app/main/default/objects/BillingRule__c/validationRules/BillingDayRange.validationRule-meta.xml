@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata"><fullName>BillingDayRange</fullName><active>true</active><errorConditionFormula>OR(BillingDay__c &lt; 1, BillingDay__c &gt; 28)</errorConditionFormula><errorDisplayField>BillingDay__c</errorDisplayField><errorMessage>Le jour de facturation doit être compris entre 1 et 28.</errorMessage></ValidationRule>

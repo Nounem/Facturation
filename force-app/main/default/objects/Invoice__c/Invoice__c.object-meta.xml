@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Facture client issue d'un devis Salesforce ou créée directement.</description>
+    <enableActivities>true</enableActivities>
+    <enableFeeds>true</enableFeeds>
+    <enableHistory>true</enableHistory>
+    <enableReports>true</enableReports>
+    <label>Facture</label>
+    <nameField>
+        <displayFormat>DOC-{000000}</displayFormat>
+        <label>Identifiant interne</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Factures</pluralLabel>
+    <sharingModel>ReadWrite</sharingModel>
+</CustomObject>

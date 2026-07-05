@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata"><fullName>Prefix__c</fullName><defaultValue>&quot;FAC&quot;</defaultValue><label>Préfixe</label><length>15</length><required>true</required><type>Text</type></CustomField>

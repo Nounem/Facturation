@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Entité juridique émettrice des devis et factures.</description>
+    <enableReports>true</enableReports>
+    <label>Entité de facturation</label>
+    <nameField>
+        <label>Raison sociale</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Entités de facturation</pluralLabel>
+    <sharingModel>ReadWrite</sharingModel>
+</CustomObject>
