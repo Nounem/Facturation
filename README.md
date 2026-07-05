@@ -20,9 +20,12 @@ tâches Apex sont en attente ou en cours.
 - [Guide de validation et de déploiement](docs/guide-deploiement.md)
 - [Présentation du projet avec notes orateur](docs/presentation.md)
 - [Présentation PowerPoint](docs/presentation-facturation-salesforce.pptx)
+- [Aperçu PDF de la présentation](docs/presentation-facturation-salesforce.pdf)
 - [Audit du raccordement Chorus Pro](docs/chorus-pro-audit.md)
 
-Le PowerPoint est éditable et contient les notes orateur. Pour le régénérer :
+Le PowerPoint est éditable et compatible avec Keynote. Les notes orateur sont
+conservées dans [docs/presentation.md](docs/presentation.md). Pour régénérer le
+fichier :
 
 ```bash
 python3 -m pip install -r requirements-docs.txt

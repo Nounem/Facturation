@@ -150,8 +150,10 @@ def add_footer(slide):
 
 
 def add_notes(slide, text):
-    frame = slide.notes_slide.notes_text_frame
-    frame.text = text
+    # python-pptx 1.0 génère des notes que Keynote refuse d'importer.
+    # Les notes orateur restent maintenues dans docs/presentation.md.
+    # Ne pas accéder à slide.notes_slide ici : cet accès crée la relation OOXML.
+    return None
 
 
 def add_card(slide, x, y, w, h, title, body, accent="blue", fill="white"):
