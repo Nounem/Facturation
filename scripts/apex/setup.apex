@@ -35,3 +35,18 @@ if ([
         Padding__c = 5
     );
 }
+
+if ([
+    SELECT COUNT() FROM NumberingSequence__c
+    WHERE BillingEntity__c = :entity.Id AND DocumentType__c = 'CreditNote' AND Year__c = :currentYear
+] == 0) {
+    insert new NumberingSequence__c(
+        Name = 'Avoirs ' + currentYear,
+        BillingEntity__c = entity.Id,
+        DocumentType__c = 'CreditNote',
+        Year__c = currentYear,
+        Prefix__c = 'AV',
+        NextNumber__c = 1,
+        Padding__c = 5
+    );
+}

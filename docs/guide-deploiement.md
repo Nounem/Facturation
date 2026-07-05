@@ -104,6 +104,7 @@ sf project deploy validate \
   --test-level RunSpecifiedTests \
   --tests BillingCalculationServiceTest \
   --tests BillingBrandingControllerTest \
+  --tests BillingSecurityTest \
   --tests BillingRuleEngineTest \
   --tests BillingRunSchedulerTest \
   --tests BillingWorkspaceControllerTest \
@@ -116,6 +117,7 @@ sf project deploy start \
   --test-level RunSpecifiedTests \
   --tests BillingCalculationServiceTest \
   --tests BillingBrandingControllerTest \
+  --tests BillingSecurityTest \
   --tests BillingRuleEngineTest \
   --tests BillingRunSchedulerTest \
   --tests BillingWorkspaceControllerTest \
@@ -134,7 +136,7 @@ sf org assign permset \
    SIRET, TVA, forme juridique, capital, RCS, email et instructions de paiement.
 3. Charger le logo et choisir la couleur depuis **Configurer le PDF**.
 4. Créer le taux de TVA par défaut.
-5. Créer une séquence de facture pour l’année courante.
+5. Créer les séquences de facture et d’avoir pour l’année courante.
 6. Créer les règles nécessaires ou exécuter `configureBillingRules.apex`.
 7. Ajouter **Espace devis et factures** à la page Lightning Opportunité.
 8. Vérifier la tâche `Facturation quotidienne` dans **Scheduled Jobs**.
@@ -149,6 +151,8 @@ sf org assign permset \
 | Créer une facture directe | Facture brouillon sans `SourceQuote__c` |
 | Émettre | Numéro définitif, statut émis et verrouillage |
 | Générer le PDF | Fichier PDF ouvert et nouvelle version créée |
+| Créer un avoir complet ou partiel | Séquence AV, facture d’origine créditée et solde recalculé |
+| Émettre avec une donnée légale absente | Refus avant numérotation avec la liste des données à corriger |
 | Enregistrer un paiement | Solde et statut recalculés |
 | Activer une règle sans date | Message de validation explicite |
 | Exécuter le batch | Une facture par opportunité et échéance |

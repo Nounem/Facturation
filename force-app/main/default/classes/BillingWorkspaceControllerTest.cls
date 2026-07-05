@@ -8,18 +8,41 @@ private class BillingWorkspaceControllerTest {
             BillingPostalCode = '75001',
             BillingCity = 'Paris',
             BillingCountry = 'France',
+            BillingRegistrationNumber__c = '123456789',
             BillingRecipientType__c = 'PrivateBusiness',
             BillingSiret__c = '12345678900012'
         );
         insert account;
 
-        insert new BillingEntity__c(
+        BillingEntity__c entity = new BillingEntity__c(
             Name = 'Société Workspace',
             RegistrationNumber__c = '123456789',
             Address__c = '10 avenue Salesforce, 75002 Paris',
+            Siret__c = '12345678900012',
             IsDefault__c = true,
             DefaultPaymentTermsDays__c = 30
         );
+        insert entity;
+        insert new List<NumberingSequence__c>{
+            new NumberingSequence__c(
+                Name = entity.Id + '-Invoice-' + Date.today().year(),
+                BillingEntity__c = entity.Id,
+                DocumentType__c = 'Invoice',
+                Year__c = Date.today().year(),
+                Prefix__c = 'FAC',
+                NextNumber__c = 1,
+                Padding__c = 5
+            ),
+            new NumberingSequence__c(
+                Name = entity.Id + '-CreditNote-' + Date.today().year(),
+                BillingEntity__c = entity.Id,
+                DocumentType__c = 'CreditNote',
+                Year__c = Date.today().year(),
+                Prefix__c = 'AV',
+                NextNumber__c = 1,
+                Padding__c = 5
+            )
+        };
         insert new TaxRate__c(
             Name = 'TVA 20 %',
             Rate__c = 20,
@@ -97,5 +120,34 @@ private class BillingWorkspaceControllerTest {
         System.assertEquals(1, afterInvoice.quotes.size());
         System.assertEquals(1, afterInvoice.invoices.size());
         System.assertEquals(invoiceId, afterInvoice.invoices[0].Id);
+    }
+
+    @IsTest
+    static void createsAndRefreshesAnIssuedCreditNote() {
+        Opportunity opportunity = [SELECT Id FROM Opportunity LIMIT 1];
+
+        Test.startTest();
+        Id invoiceId = BillingWorkspaceController.createInvoiceFromOpportunity(opportunity.Id);
+        BillingWorkspaceController.issueInvoice(invoiceId);
+        Id creditNoteId = BillingWorkspaceController.createCreditNote(invoiceId);
+        BillingWorkspaceController.issueInvoice(creditNoteId);
+        BillingWorkspaceController.WorkspaceData workspace =
+            BillingWorkspaceController.load(opportunity.Id);
+        Test.stopTest();
+
+        Invoice__c creditNote = [
+            SELECT DocumentType__c, OriginalInvoice__c, InvoiceNumber__c, IsLocked__c
+            FROM Invoice__c WHERE Id = :creditNoteId
+        ];
+        Invoice__c original = [
+            SELECT Status__c, BalanceDue__c FROM Invoice__c WHERE Id = :invoiceId
+        ];
+        System.assertEquals(2, workspace.invoices.size());
+        System.assertEquals('CreditNote', creditNote.DocumentType__c);
+        System.assertEquals(invoiceId, creditNote.OriginalInvoice__c);
+        System.assert(creditNote.InvoiceNumber__c.startsWith('AV-'));
+        System.assertEquals(true, creditNote.IsLocked__c);
+        System.assertEquals('Credited', original.Status__c);
+        System.assertEquals(0, original.BalanceDue__c);
     }
 }

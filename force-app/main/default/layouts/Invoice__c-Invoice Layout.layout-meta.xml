@@ -3,6 +3,7 @@
     <layoutSections>
         <customLabel>false</customLabel><detailHeading>true</detailHeading><editHeading>true</editHeading><label>Informations</label>
         <layoutColumns>
+            <layoutItems><behavior>Required</behavior><field>DocumentType__c</field></layoutItems>
             <layoutItems><behavior>Readonly</behavior><field>Name</field></layoutItems>
             <layoutItems><behavior>Edit</behavior><field>Account__c</field></layoutItems>
             <layoutItems><behavior>Edit</behavior><field>Opportunity__c</field></layoutItems>
@@ -13,6 +14,18 @@
             <layoutItems><behavior>Edit</behavior><field>Status__c</field></layoutItems>
             <layoutItems><behavior>Edit</behavior><field>BillingEntity__c</field></layoutItems>
             <layoutItems><behavior>Readonly</behavior><field>IsLocked__c</field></layoutItems>
+        </layoutColumns>
+        <style>TwoColumnsTopToBottom</style>
+    </layoutSections>
+    <layoutSections>
+        <customLabel>false</customLabel><detailHeading>true</detailHeading><editHeading>true</editHeading><label>Avoir et régularisation</label>
+        <layoutColumns>
+            <layoutItems><behavior>Edit</behavior><field>OriginalInvoice__c</field></layoutItems>
+            <layoutItems><behavior>Edit</behavior><field>CreditReason__c</field></layoutItems>
+        </layoutColumns>
+        <layoutColumns>
+            <layoutItems><behavior>Readonly</behavior><field>CreditedAmount__c</field></layoutItems>
+            <layoutItems><behavior>Readonly</behavior><field>RefundDue__c</field></layoutItems>
         </layoutColumns>
         <style>TwoColumnsTopToBottom</style>
     </layoutSections>
@@ -73,5 +86,6 @@
     <relatedLists><fields>NAME</fields><relatedList>InvoiceLine__c.Invoice__c</relatedList></relatedLists>
     <relatedLists><fields>NAME</fields><relatedList>Payment__c.Invoice__c</relatedList></relatedLists>
     <relatedLists><fields>NAME</fields><relatedList>EInvoiceTransmission__c.Invoice__c</relatedList></relatedLists>
+    <relatedLists><fields>NAME</fields><relatedList>Invoice__c.OriginalInvoice__c</relatedList></relatedLists>
     <showEmailCheckbox>false</showEmailCheckbox><showHighlightsPanel>true</showHighlightsPanel><showInteractionLogPanel>false</showInteractionLogPanel><showRunAssignmentRulesCheckbox>false</showRunAssignmentRulesCheckbox><showSubmitAndAttachButton>false</showSubmitAndAttachButton>
 </Layout>

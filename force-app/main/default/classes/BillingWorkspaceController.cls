@@ -12,8 +12,10 @@ public with sharing class BillingWorkspaceController {
         if (opportunityId == null) {
             throw new AuraHandledException('L’identifiant de l’opportunité est requis.');
         }
+        requireWorkspaceReadAccess();
         Opportunity opportunity = [
-            SELECT Id, Name FROM Opportunity WHERE Id = :opportunityId
+            SELECT Id, Name FROM Opportunity
+            WHERE Id = :opportunityId
         ];
         WorkspaceData result = new WorkspaceData();
         result.opportunityName = opportunity.Name;
@@ -26,7 +28,10 @@ public with sharing class BillingWorkspaceController {
         result.invoices = [
             SELECT Id, Name, InvoiceNumber__c, Status__c, IssueDate__c, DueDate__c,
                    TotalAmount__c, BalanceDue__c, IsLocked__c, Origin__c,
-                   BillingPeriodStart__c, BillingPeriodEnd__c, BillingRule__c
+                   BillingPeriodStart__c, BillingPeriodEnd__c, BillingRule__c,
+                   DocumentType__c, OriginalInvoice__c,
+                   OriginalInvoice__r.InvoiceNumber__c, CreditReason__c,
+                   CreditedAmount__c, RefundDue__c
             FROM Invoice__c WHERE Opportunity__c = :opportunityId
             ORDER BY CreatedDate DESC LIMIT 100
         ];
@@ -35,6 +40,10 @@ public with sharing class BillingWorkspaceController {
 
     @AuraEnabled
     public static Id createQuoteFromOpportunity(Id opportunityId) {
+        BillingSecurity.requireRead(Opportunity.SObjectType, 'Opportunité');
+        BillingSecurity.requireRead(OpportunityLineItem.SObjectType, 'Produit d’opportunité');
+        BillingSecurity.requireCreate(Quote.SObjectType, 'Devis');
+        BillingSecurity.requireCreate(QuoteLineItem.SObjectType, 'Ligne de devis');
         Opportunity opportunity = [
             SELECT Id, Name, AccountId, Pricebook2Id, Account.BillingRecipientType__c,
                    Account.BillingSiret__c,
@@ -112,6 +121,7 @@ public with sharing class BillingWorkspaceController {
     @AuraEnabled
     public static Id convertQuoteToInvoice(Id quoteId) {
         try {
+            requireInvoiceCreationAccess();
             return InvoiceService.convertQuote(quoteId);
         } catch (Exception error) {
             throw new AuraHandledException(error.getMessage());
@@ -121,7 +131,19 @@ public with sharing class BillingWorkspaceController {
     @AuraEnabled
     public static Id createInvoiceFromOpportunity(Id opportunityId) {
         try {
+            requireInvoiceCreationAccess();
             return InvoiceService.createDirectFromOpportunity(opportunityId);
+        } catch (Exception error) {
+            throw new AuraHandledException(error.getMessage());
+        }
+    }
+
+    @AuraEnabled
+    public static Id createCreditNote(Id invoiceId) {
+        try {
+            requireInvoiceCreationAccess();
+            BillingSecurity.requireUpdate(Invoice__c.SObjectType, 'Facture');
+            return InvoiceService.createCreditNote(invoiceId);
         } catch (Exception error) {
             throw new AuraHandledException(error.getMessage());
         }
@@ -130,6 +152,7 @@ public with sharing class BillingWorkspaceController {
     @AuraEnabled
     public static Invoice__c issueInvoice(Id invoiceId) {
         try {
+            BillingSecurity.requireUpdate(Invoice__c.SObjectType, 'Facture');
             return InvoiceService.issue(invoiceId);
         } catch (Exception error) {
             throw new AuraHandledException(error.getMessage());
@@ -139,9 +162,37 @@ public with sharing class BillingWorkspaceController {
     @AuraEnabled
     public static EInvoiceTransmission__c prepareElectronicInvoice(Id invoiceId) {
         try {
+            BillingSecurity.requireRead(Invoice__c.SObjectType, 'Facture');
+            BillingSecurity.requireCreate(
+                EInvoiceTransmission__c.SObjectType,
+                'Transmission électronique'
+            );
             return EInvoiceService.prepare(invoiceId);
         } catch (Exception error) {
             throw new AuraHandledException(error.getMessage());
         }
+    }
+
+    private static void requireWorkspaceReadAccess() {
+        BillingSecurity.requireRead(Opportunity.SObjectType, 'Opportunité');
+        BillingSecurity.requireRead(Quote.SObjectType, 'Devis');
+        BillingSecurity.requireRead(Invoice__c.SObjectType, 'Facture');
+        BillingSecurity.requireReadableFields(
+            new List<Schema.SObjectField>{
+                Invoice__c.InvoiceNumber__c,
+                Invoice__c.Status__c,
+                Invoice__c.TotalAmount__c,
+                Invoice__c.BalanceDue__c,
+                Invoice__c.DocumentType__c
+            },
+            'Facture'
+        );
+    }
+
+    private static void requireInvoiceCreationAccess() {
+        BillingSecurity.requireRead(Account.SObjectType, 'Compte');
+        BillingSecurity.requireRead(Opportunity.SObjectType, 'Opportunité');
+        BillingSecurity.requireCreate(Invoice__c.SObjectType, 'Facture');
+        BillingSecurity.requireCreate(InvoiceLine__c.SObjectType, 'Ligne de facture');
     }
 }

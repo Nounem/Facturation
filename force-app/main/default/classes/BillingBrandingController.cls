@@ -12,9 +12,19 @@ public with sharing class BillingBrandingController {
         if (billingEntityId == null) {
             throw new AuraHandledException('L’entité de facturation est requise.');
         }
+        BillingSecurity.requireRead(BillingEntity__c.SObjectType, 'Entité de facturation');
+        BillingSecurity.requireReadableFields(
+            new List<Schema.SObjectField>{
+                BillingEntity__c.Name,
+                BillingEntity__c.PdfPrimaryColor__c,
+                BillingEntity__c.LogoContentDocumentId__c
+            },
+            'Entité de facturation'
+        );
         BillingEntity__c entity = [
             SELECT Id, Name, PdfPrimaryColor__c, LogoContentDocumentId__c
-            FROM BillingEntity__c WHERE Id = :billingEntityId
+            FROM BillingEntity__c
+            WHERE Id = :billingEntityId
         ];
         BrandingConfig config = new BrandingConfig();
         config.entityName = entity.Name;
@@ -43,6 +53,11 @@ public with sharing class BillingBrandingController {
         if (billingEntityId == null || contentDocumentId == null) {
             throw new AuraHandledException('Sélectionnez un fichier logo valide.');
         }
+        BillingSecurity.requireUpdate(BillingEntity__c.SObjectType, 'Entité de facturation');
+        BillingSecurity.requireUpdateableFields(
+            new List<Schema.SObjectField>{ BillingEntity__c.LogoContentDocumentId__c },
+            'Entité de facturation'
+        );
         ContentDocument document = [
             SELECT Id, FileType FROM ContentDocument WHERE Id = :contentDocumentId
         ];
@@ -61,6 +76,11 @@ public with sharing class BillingBrandingController {
         if (billingEntityId == null) {
             throw new AuraHandledException('L’entité de facturation est requise.');
         }
+        BillingSecurity.requireUpdate(BillingEntity__c.SObjectType, 'Entité de facturation');
+        BillingSecurity.requireUpdateableFields(
+            new List<Schema.SObjectField>{ BillingEntity__c.PdfPrimaryColor__c },
+            'Entité de facturation'
+        );
         String normalized = normalizeColor(primaryColor);
         if (String.isBlank(primaryColor) || normalized != primaryColor.toUpperCase()) {
             throw new AuraHandledException('Utilisez une couleur hexadécimale au format #RRGGBB.');
@@ -74,6 +94,11 @@ public with sharing class BillingBrandingController {
         if (billingEntityId == null) {
             throw new AuraHandledException('L’entité de facturation est requise.');
         }
+        BillingSecurity.requireUpdate(BillingEntity__c.SObjectType, 'Entité de facturation');
+        BillingSecurity.requireUpdateableFields(
+            new List<Schema.SObjectField>{ BillingEntity__c.LogoContentDocumentId__c },
+            'Entité de facturation'
+        );
         update new BillingEntity__c(Id = billingEntityId, LogoContentDocumentId__c = null);
         return getConfig(billingEntityId);
     }

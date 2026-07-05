@@ -14,7 +14,8 @@ public with sharing class InvoiceService {
 
     public static Id convertQuote(Id quoteId) {
         List<Invoice__c> existing = [
-            SELECT Id FROM Invoice__c WHERE SourceQuote__c = :quoteId LIMIT 1
+            SELECT Id FROM Invoice__c
+            WHERE SourceQuote__c = :quoteId LIMIT 1
         ];
         if (!existing.isEmpty()) {
             return existing[0].Id;
@@ -44,7 +45,8 @@ public with sharing class InvoiceService {
         Id entityId = quote.BillingEntity__c;
         if (entityId == null) {
             List<BillingEntity__c> defaults = [
-                SELECT Id FROM BillingEntity__c WHERE IsDefault__c = true LIMIT 1
+                SELECT Id FROM BillingEntity__c
+                WHERE IsDefault__c = true LIMIT 1
             ];
             if (defaults.isEmpty()) {
                 throw new BillingException('Configurez une entité de facturation par défaut.');
@@ -54,6 +56,7 @@ public with sharing class InvoiceService {
 
         Account account = quote.Opportunity.Account;
         Invoice__c invoice = new Invoice__c(
+            DocumentType__c = 'Invoice',
             Account__c = account.Id,
             Opportunity__c = quote.OpportunityId,
             SourceQuote__c = quote.Id,
@@ -136,7 +139,8 @@ public with sharing class InvoiceService {
                 SELECT Id, Active__c, BillingFrequency__c, BillingType__c,
                        BillingDay__c, PaymentTermsDays__c, PeriodBoundary__c,
                        AutoIssue__c, BillingEntity__c
-                FROM BillingRule__c WHERE Id = :opportunity.BillingRule__c
+                FROM BillingRule__c
+                WHERE Id = :opportunity.BillingRule__c
             ];
             if (!rule.Active__c) {
                 throw new BillingException('La règle de facturation affectée est inactive.');
@@ -150,7 +154,8 @@ public with sharing class InvoiceService {
         if (String.isNotBlank(options.generationKey)) {
             List<Invoice__c> existing = [
                 SELECT Id FROM Invoice__c
-                WHERE GenerationKey__c = :options.generationKey LIMIT 1
+                WHERE GenerationKey__c = :options.generationKey
+                LIMIT 1
             ];
             if (!existing.isEmpty()) {
                 result.invoiceId = existing[0].Id;
@@ -162,7 +167,8 @@ public with sharing class InvoiceService {
         if (entityId == null) {
             List<BillingEntity__c> entities = [
                 SELECT Id, DefaultPaymentTermsDays__c
-                FROM BillingEntity__c WHERE IsDefault__c = true LIMIT 1
+                FROM BillingEntity__c
+                WHERE IsDefault__c = true LIMIT 1
             ];
             if (entities.isEmpty()) {
                 throw new BillingException('Configurez une entité de facturation par défaut.');
@@ -184,6 +190,7 @@ public with sharing class InvoiceService {
             : BillingRuleEngine.periodFor(rule, billingDate);
         Account account = opportunity.Account;
         Invoice__c invoice = new Invoice__c(
+            DocumentType__c = 'Invoice',
             Account__c = account.Id,
             Opportunity__c = opportunity.Id,
             BillingEntity__c = entityId,
@@ -216,7 +223,8 @@ public with sharing class InvoiceService {
         Decimal defaultTax = 20;
         List<TaxRate__c> taxes = [
             SELECT Rate__c FROM TaxRate__c
-            WHERE IsActive__c = true AND IsDefault__c = true LIMIT 1
+            WHERE IsActive__c = true AND IsDefault__c = true
+            LIMIT 1
         ];
         if (!taxes.isEmpty()) defaultTax = taxes[0].Rate__c;
 
@@ -246,13 +254,102 @@ public with sharing class InvoiceService {
         return result;
     }
 
+    public static Id createCreditNote(Id originalInvoiceId) {
+        if (originalInvoiceId == null) {
+            throw new BillingException('La facture d’origine est requise.');
+        }
+        List<Invoice__c> existingDrafts = [
+            SELECT Id FROM Invoice__c
+            WHERE OriginalInvoice__c = :originalInvoiceId
+              AND DocumentType__c = 'CreditNote'
+              AND Status__c = 'Draft'
+            ORDER BY CreatedDate DESC
+            LIMIT 1
+        ];
+        if (!existingDrafts.isEmpty()) return existingDrafts[0].Id;
+
+        Invoice__c original = [
+            SELECT Id, Account__c, Opportunity__c, BillingEntity__c,
+                   InvoiceNumber__c, DocumentType__c, IsLocked__c,
+                   TotalAmount__c, CreditedAmount__c,
+                   CustomerName__c, BillingStreet__c, BillingPostalCode__c,
+                   BillingCity__c, BillingCountry__c,
+                   CustomerRegistrationNumber__c, CustomerTaxId__c,
+                   RecipientType__c, RecipientSiret__c,
+                   CommitmentNumber__c, ServiceCode__c, BillingFramework__c,
+                   ServiceDate__c, OperationCategory__c, DeliveryAddress__c,
+                   VatOnDebits__c,
+                   (SELECT Product__c, Description__c, Quantity__c,
+                           UnitPrice__c, DiscountPercent__c, TaxRate__c,
+                           SortOrder__c
+                    FROM Lines__r ORDER BY SortOrder__c)
+            FROM Invoice__c WHERE Id = :originalInvoiceId
+        ];
+        if (original.DocumentType__c != 'Invoice' || !original.IsLocked__c) {
+            throw new BillingException('Un avoir ne peut être créé que depuis une facture émise.');
+        }
+        Decimal credited = original.CreditedAmount__c == null ? 0 : original.CreditedAmount__c;
+        if (credited >= original.TotalAmount__c) {
+            throw new BillingException('Cette facture est déjà intégralement créditée.');
+        }
+        if (original.Lines__r.isEmpty()) {
+            throw new BillingException('La facture d’origine ne contient aucune ligne.');
+        }
+
+        Invoice__c creditNote = new Invoice__c(
+            DocumentType__c = 'CreditNote',
+            OriginalInvoice__c = original.Id,
+            Origin__c = 'CreditNote',
+            Account__c = original.Account__c,
+            Opportunity__c = original.Opportunity__c,
+            BillingEntity__c = original.BillingEntity__c,
+            Status__c = 'Draft',
+            CreditReason__c = 'Correction de la facture ' + original.InvoiceNumber__c,
+            CustomerName__c = original.CustomerName__c,
+            BillingStreet__c = original.BillingStreet__c,
+            BillingPostalCode__c = original.BillingPostalCode__c,
+            BillingCity__c = original.BillingCity__c,
+            BillingCountry__c = original.BillingCountry__c,
+            CustomerRegistrationNumber__c = original.CustomerRegistrationNumber__c,
+            CustomerTaxId__c = original.CustomerTaxId__c,
+            RecipientType__c = original.RecipientType__c,
+            RecipientSiret__c = original.RecipientSiret__c,
+            CommitmentNumber__c = original.CommitmentNumber__c,
+            ServiceCode__c = original.ServiceCode__c,
+            BillingFramework__c = original.BillingFramework__c,
+            ServiceDate__c = original.ServiceDate__c,
+            OperationCategory__c = original.OperationCategory__c,
+            DeliveryAddress__c = original.DeliveryAddress__c,
+            VatOnDebits__c = original.VatOnDebits__c
+        );
+        insert creditNote;
+
+        List<InvoiceLine__c> creditLines = new List<InvoiceLine__c>();
+        for (InvoiceLine__c source : original.Lines__r) {
+            creditLines.add(new InvoiceLine__c(
+                Invoice__c = creditNote.Id,
+                Product__c = source.Product__c,
+                Description__c = source.Description__c,
+                Quantity__c = source.Quantity__c,
+                UnitPrice__c = source.UnitPrice__c,
+                DiscountPercent__c = source.DiscountPercent__c,
+                TaxRate__c = source.TaxRate__c,
+                SortOrder__c = source.SortOrder__c
+            ));
+        }
+        insert creditLines;
+        return creditNote.Id;
+    }
+
     public static Invoice__c issue(Id invoiceId) {
         Invoice__c invoice = [
             SELECT Id, BillingEntity__c, Status__c, InvoiceNumber__c, IsLocked__c,
-                   IssueDate__c, DueDate__c, TotalAmount__c,
+                   IssueDate__c, DueDate__c, TotalAmount__c, DocumentType__c,
+                   OriginalInvoice__c,
                    BillingEntity__r.DefaultPaymentTermsDays__c,
                    (SELECT Id FROM Lines__r LIMIT 1)
-            FROM Invoice__c WHERE Id = :invoiceId FOR UPDATE
+            FROM Invoice__c
+            WHERE Id = :invoiceId FOR UPDATE
         ];
         if (invoice.IsLocked__c) {
             return invoice;
@@ -260,16 +357,52 @@ public with sharing class InvoiceService {
         if (invoice.Lines__r.isEmpty()) {
             throw new BillingException('Une facture doit contenir au moins une ligne.');
         }
+        InvoiceValidationService.validateForIssue(invoice.Id);
+
+        Invoice__c original;
+        if (invoice.DocumentType__c == 'CreditNote') {
+            original = [
+                SELECT Id, TotalAmount__c, CreditedAmount__c, AmountPaid__c
+                FROM Invoice__c
+                WHERE Id = :invoice.OriginalInvoice__c FOR UPDATE
+            ];
+            Decimal credited = original.CreditedAmount__c == null ? 0 : original.CreditedAmount__c;
+            if (invoice.TotalAmount__c > original.TotalAmount__c - credited) {
+                throw new BillingException(
+                    'Le montant de l’avoir dépasse le montant restant à créditer.'
+                );
+            }
+        }
         Date issueDate = invoice.IssueDate__c == null ? Date.today() : invoice.IssueDate__c;
         Integer terms = invoice.BillingEntity__r.DefaultPaymentTermsDays__c == null
             ? 30
             : Integer.valueOf(invoice.BillingEntity__r.DefaultPaymentTermsDays__c);
-        invoice.InvoiceNumber__c = NumberingService.nextInvoiceNumber(invoice.BillingEntity__c, issueDate);
+        invoice.InvoiceNumber__c = NumberingService.nextDocumentNumber(
+            invoice.BillingEntity__c,
+            issueDate,
+            invoice.DocumentType__c
+        );
         invoice.IssueDate__c = issueDate;
-        invoice.DueDate__c = invoice.DueDate__c == null ? issueDate.addDays(terms) : invoice.DueDate__c;
+        invoice.DueDate__c = invoice.DocumentType__c == 'CreditNote'
+            ? issueDate
+            : (invoice.DueDate__c == null ? issueDate.addDays(terms) : invoice.DueDate__c);
         invoice.Status__c = 'Issued';
         invoice.IsLocked__c = true;
         update invoice;
+
+        if (original != null) {
+            Decimal newCredited = (original.CreditedAmount__c == null ? 0 : original.CreditedAmount__c)
+                + invoice.TotalAmount__c;
+            Decimal paid = original.AmountPaid__c == null ? 0 : original.AmountPaid__c;
+            Decimal remaining = original.TotalAmount__c - newCredited;
+            original.CreditedAmount__c = newCredited;
+            original.Status__c = remaining <= 0
+                ? 'Credited'
+                : (paid >= remaining
+                    ? 'Paid'
+                    : (paid > 0 ? 'PartiallyPaid' : 'PartiallyCredited'));
+            update original;
+        }
         return invoice;
     }
 }

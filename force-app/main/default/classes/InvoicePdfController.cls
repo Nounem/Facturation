@@ -24,9 +24,33 @@ public with sharing class InvoicePdfController {
     }
 
     public String getOriginLabel() {
+        if (invoice.DocumentType__c == 'CreditNote') return 'Avoir client';
         if (invoice.Origin__c == 'Quote') return 'Issue d’un devis accepté';
         if (invoice.Origin__c == 'Scheduled') return 'Facturation planifiée';
         return 'Facture directe';
+    }
+
+    public String getDocumentTitle() {
+        return invoice.DocumentType__c == 'CreditNote' ? 'AVOIR' : 'FACTURE';
+    }
+
+    public String getCustomerBlockLabel() {
+        return invoice.DocumentType__c == 'CreditNote' ? 'Client concerné' : 'Facturé à';
+    }
+
+    public String getGrandTotalLabel() {
+        return invoice.DocumentType__c == 'CreditNote' ? 'Total de l’avoir' : 'Total TTC';
+    }
+
+    public String getSettlementLabel() {
+        return invoice.DocumentType__c == 'CreditNote' ? 'Effet de l’avoir' : 'Règlement';
+    }
+
+    public String getSettlementTitle() {
+        if (invoice.DocumentType__c == 'CreditNote') {
+            return 'Montant porté au crédit du client : ' + getTotalLabel();
+        }
+        return 'À régler au plus tard le ' + formatDate(invoice.DueDate__c);
     }
 
     public String getSubtotalLabel() { return formatMoney(invoice.Subtotal__c); }
@@ -42,6 +66,8 @@ public with sharing class InvoicePdfController {
         Id invoiceId = controller.getId();
         invoice = [
             SELECT Id, InvoiceNumber__c, IssueDate__c, DueDate__c, Origin__c,
+                   DocumentType__c, CreditReason__c,
+                   OriginalInvoice__c, OriginalInvoice__r.InvoiceNumber__c,
                    BillingPeriodStart__c, BillingPeriodEnd__c,
                    CustomerName__c, BillingStreet__c, BillingPostalCode__c,
                    BillingCity__c, BillingCountry__c, CustomerRegistrationNumber__c,
@@ -78,6 +104,16 @@ public with sharing class InvoicePdfController {
         if (invoiceId == null) {
             throw new AuraHandledException('L’identifiant de la facture est requis.');
         }
+        BillingSecurity.requireRead(Invoice__c.SObjectType, 'Facture');
+        BillingSecurity.requireCreate(ContentVersion.SObjectType, 'Version de fichier');
+        BillingSecurity.requireCreate(ContentDocumentLink.SObjectType, 'Lien de fichier');
+        BillingSecurity.requireReadableFields(
+            new List<Schema.SObjectField>{
+                Invoice__c.InvoiceNumber__c,
+                Invoice__c.IsLocked__c
+            },
+            'Facture'
+        );
         Invoice__c invoice = [
             SELECT Id, InvoiceNumber__c, IsLocked__c FROM Invoice__c WHERE Id = :invoiceId
         ];
@@ -197,6 +233,13 @@ public with sharing class InvoicePdfController {
         while (result.contains(',') && result.endsWith('0')) result = result.left(result.length() - 1);
         if (result.endsWith(',')) result = result.left(result.length() - 1);
         return result;
+    }
+
+    private static String formatDate(Date value) {
+        if (value == null) return '';
+        String day = value.day() < 10 ? '0' + value.day() : String.valueOf(value.day());
+        String month = value.month() < 10 ? '0' + value.month() : String.valueOf(value.month());
+        return day + '/' + month + '/' + value.year();
     }
 
     public class InvoiceLineView {

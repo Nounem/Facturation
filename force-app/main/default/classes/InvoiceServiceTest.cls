@@ -8,6 +8,7 @@ private class InvoiceServiceTest {
             BillingPostalCode = '75001',
             BillingCity = 'Paris',
             BillingCountry = 'France',
+            BillingRegistrationNumber__c = '123456789',
             BillingRecipientType__c = 'PrivateBusiness',
             BillingSiret__c = '12345678900012'
         );
@@ -17,6 +18,7 @@ private class InvoiceServiceTest {
             Name = 'Société Test',
             RegistrationNumber__c = '123456789',
             Address__c = '10 avenue Salesforce, 75002 Paris',
+            Siret__c = '12345678900012',
             IsDefault__c = true,
             DefaultPaymentTermsDays__c = 30
         );
@@ -27,6 +29,15 @@ private class InvoiceServiceTest {
             DocumentType__c = 'Invoice',
             Year__c = Date.today().year(),
             Prefix__c = 'FAC',
+            NextNumber__c = 1,
+            Padding__c = 5
+        );
+        insert new NumberingSequence__c(
+            Name = entity.Id + '-CreditNote-' + Date.today().year(),
+            BillingEntity__c = entity.Id,
+            DocumentType__c = 'CreditNote',
+            Year__c = Date.today().year(),
+            Prefix__c = 'AV',
             NextNumber__c = 1,
             Padding__c = 5
         );
@@ -183,6 +194,80 @@ private class InvoiceServiceTest {
 
         System.assertEquals(false, result.isSuccess());
         System.assert(result.getErrors()[0].getMessage().contains('immuable'));
+    }
+
+    @IsTest
+    static void createsAndIssuesFullCreditNote() {
+        Quote quote = [SELECT Id FROM Quote LIMIT 1];
+        Id invoiceId = InvoiceService.convertQuote(quote.Id);
+        InvoiceService.issue(invoiceId);
+
+        Test.startTest();
+        Id creditNoteId = InvoiceService.createCreditNote(invoiceId);
+        Invoice__c issuedCredit = InvoiceService.issue(creditNoteId);
+        Test.stopTest();
+
+        Invoice__c original = [
+            SELECT Status__c, CreditedAmount__c, BalanceDue__c, RefundDue__c
+            FROM Invoice__c WHERE Id = :invoiceId
+        ];
+        Invoice__c creditNote = [
+            SELECT DocumentType__c, OriginalInvoice__c, InvoiceNumber__c,
+                   Status__c, IsLocked__c, TotalAmount__c, BalanceDue__c
+            FROM Invoice__c WHERE Id = :issuedCredit.Id
+        ];
+        System.assertEquals('CreditNote', creditNote.DocumentType__c);
+        System.assertEquals(invoiceId, creditNote.OriginalInvoice__c);
+        System.assertEquals('AV-' + Date.today().year() + '-00001', creditNote.InvoiceNumber__c);
+        System.assertEquals('Issued', creditNote.Status__c);
+        System.assertEquals(true, creditNote.IsLocked__c);
+        System.assertEquals(2160, creditNote.TotalAmount__c);
+        System.assertEquals(0, creditNote.BalanceDue__c);
+        System.assertEquals('Credited', original.Status__c);
+        System.assertEquals(2160, original.CreditedAmount__c);
+        System.assertEquals(0, original.BalanceDue__c);
+        System.assertEquals(0, original.RefundDue__c);
+    }
+
+    @IsTest
+    static void supportsPartialCreditNote() {
+        Quote quote = [SELECT Id FROM Quote LIMIT 1];
+        Id invoiceId = InvoiceService.convertQuote(quote.Id);
+        InvoiceService.issue(invoiceId);
+        Id creditNoteId = InvoiceService.createCreditNote(invoiceId);
+        InvoiceLine__c creditLine = [
+            SELECT Id, Quantity__c FROM InvoiceLine__c WHERE Invoice__c = :creditNoteId
+        ];
+        creditLine.Quantity__c = 1;
+        update creditLine;
+
+        InvoiceService.issue(creditNoteId);
+
+        Invoice__c original = [
+            SELECT Status__c, CreditedAmount__c, BalanceDue__c
+            FROM Invoice__c WHERE Id = :invoiceId
+        ];
+        System.assertEquals('PartiallyCredited', original.Status__c);
+        System.assertEquals(1080, original.CreditedAmount__c);
+        System.assertEquals(1080, original.BalanceDue__c);
+    }
+
+    @IsTest
+    static void issuanceValidatorShowsMissingLegalData() {
+        Opportunity opportunity = [SELECT Id FROM Opportunity LIMIT 1];
+        Id invoiceId = InvoiceService.createDirectFromOpportunity(opportunity.Id);
+        Invoice__c invoice = [SELECT Id, CustomerRegistrationNumber__c FROM Invoice__c WHERE Id = :invoiceId];
+        invoice.CustomerRegistrationNumber__c = null;
+        update invoice;
+
+        Boolean rejected = false;
+        try {
+            InvoiceService.issue(invoiceId);
+        } catch (InvoiceValidationService.InvoiceValidationException error) {
+            rejected = true;
+            System.assert(error.getMessage().contains('SIREN du client professionnel'));
+        }
+        System.assertEquals(true, rejected);
     }
 
     @IsTest

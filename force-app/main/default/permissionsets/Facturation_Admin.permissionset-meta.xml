@@ -6,11 +6,13 @@
     <classAccesses><apexClass>BillingDueBatch</apexClass><enabled>true</enabled></classAccesses>
     <classAccesses><apexClass>BillingRuleEngine</apexClass><enabled>true</enabled></classAccesses>
     <classAccesses><apexClass>BillingRunScheduler</apexClass><enabled>true</enabled></classAccesses>
+    <classAccesses><apexClass>BillingSecurity</apexClass><enabled>true</enabled></classAccesses>
     <classAccesses><apexClass>BillingWorkspaceController</apexClass><enabled>true</enabled></classAccesses>
     <classAccesses><apexClass>EInvoiceService</apexClass><enabled>true</enabled></classAccesses>
     <classAccesses><apexClass>InvoiceLineTriggerHandler</apexClass><enabled>true</enabled></classAccesses>
     <classAccesses><apexClass>InvoicePdfController</apexClass><enabled>true</enabled></classAccesses>
     <classAccesses><apexClass>InvoiceService</apexClass><enabled>true</enabled></classAccesses>
+    <classAccesses><apexClass>InvoiceValidationService</apexClass><enabled>true</enabled></classAccesses>
     <classAccesses><apexClass>InvoiceTriggerHandler</apexClass><enabled>true</enabled></classAccesses>
     <classAccesses><apexClass>NumberingService</apexClass><enabled>true</enabled></classAccesses>
     <classAccesses><apexClass>PaymentTriggerHandler</apexClass><enabled>true</enabled></classAccesses>
@@ -43,6 +45,10 @@
     <fieldPermissions><editable>true</editable><field>Invoice__c.BillingCountry__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>Invoice__c.BillingPostalCode__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>Invoice__c.BillingStreet__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Invoice__c.OriginalInvoice__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Invoice__c.CreditReason__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>false</editable><field>Invoice__c.CreditedAmount__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>false</editable><field>Invoice__c.RefundDue__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>Invoice__c.BillingRule__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>Invoice__c.BillingPeriodStart__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>Invoice__c.BillingPeriodEnd__c</field><readable>true</readable></fieldPermissions>

@@ -1,6 +1,7 @@
 # Facturation Salesforce
 
-Application Salesforce native de gestion des devis, factures directes et factures planifiées.
+Application Salesforce native de gestion des devis, factures directes, factures
+planifiées et avoirs.
 
 [![Valider ou déployer dans Salesforce](https://img.shields.io/badge/Salesforce-Valider%20ou%20déployer-0B5CAB?logo=salesforce&amp;logoColor=white)](https://github.com/Nounem/Facturation/actions/workflows/deploy.yml)
 
@@ -22,8 +23,8 @@ tâches Apex sont en attente ou en cours.
 ## Modèle
 
 - Devis : objets standards `Quote` et `QuoteLineItem`.
-- Factures : `Invoice__c` et `InvoiceLine__c`, créées depuis un devis ou directement
-  depuis les produits de l'opportunité.
+- Factures et avoirs : `Invoice__c` et `InvoiceLine__c`, avec type de document,
+  facture d'origine, motif, numérotation et solde crédité.
 - Règles : `BillingRule__c` (ponctuelle, mensuelle, trimestrielle, semestrielle
   ou annuelle ; à échoir ou à terme échu ; échéance et jour de facturation).
 - Configuration : `BillingEntity__c`, `TaxRate__c` et `NumberingSequence__c`.
@@ -58,8 +59,14 @@ démonstration ; renseignez les vraies mentions légales avant toute émission.
 
 Dans **Espace devis et factures**, le bouton **Facture directe** crée une facture
 brouillon et ses lignes sans imposer de devis. Après contrôle, l'action **Émettre**
-attribue le numéro définitif et verrouille le document ; l'action **PDF** génère
-ensuite une nouvelle version du fichier attaché à la facture.
+valide d'abord les données juridiques, attribue le numéro définitif et verrouille
+le document ; l'action **PDF** génère ensuite une nouvelle version du fichier
+attaché à la facture ou à l'avoir.
+
+Depuis une facture émise, **Créer un avoir** prépare un document brouillon qui
+reprend les lignes. Elles peuvent être réduites pour un avoir partiel. L'émission
+utilise une séquence `AV`, crédite la facture d'origine et recalcule son statut et
+son solde sans modifier le document comptable initial.
 
 Le panneau **Règle et automatisation** permet d'affecter une règle à l'opportunité,
 de choisir la prochaine date et d'activer la génération. Le traitement
@@ -68,6 +75,9 @@ une seconde facture pour la même opportunité et la même échéance.
 
 Le logo, la couleur du PDF et les mentions de règlement se configurent depuis
 l'action **Configurer le PDF** de l'entité de facturation.
+
+La livraison est protégée par 26 tests Apex couvrant les parcours du projet et
+environ 83 % des lignes de ses classes applicatives.
 
 ## Facturation électronique
 

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>RefundDue__c</fullName>
+    <formula>IF(ISPICKVAL(DocumentType__c, "CreditNote"), 0, MAX(0, BLANKVALUE(AmountPaid__c, 0) + BLANKVALUE(CreditedAmount__c, 0) - BLANKVALUE(TotalAmount__c, 0)))</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Remboursement dû</label>
+    <precision>18</precision>
+    <scale>2</scale>
+    <type>Currency</type>
+</CustomField>

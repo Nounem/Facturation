@@ -80,7 +80,7 @@
             <td class="document" width="39%">
                 <div class="doc-box" style="background-color: {!primaryColor};">
                     <div class="doc-kicker" style="color: #ffffff;">Document comptable</div>
-                    <h1 style="color: #ffffff;">FACTURE</h1>
+                    <h1 style="color: #ffffff;"><apex:outputText value="{!documentTitle}"/></h1>
                     <div class="doc-number" style="color: #ffffff;"><apex:outputText value="{!invoice.InvoiceNumber__c}"/></div>
                 </div>
                 <div class="original">ORIGINAL · <apex:outputText value="{!originLabel}"/></div>
@@ -91,7 +91,7 @@
     <table class="overview" width="100%">
         <tr>
             <td class="customer" width="53%" style="border-top-color: {!primaryColor};">
-                <div class="label">Facturé à</div>
+                <div class="label"><apex:outputText value="{!customerBlockLabel}"/></div>
                 <div class="customer-name"><apex:outputText value="{!invoice.CustomerName__c}"/></div>
                 <apex:outputText value="{!invoice.BillingStreet__c}"/><br/>
                 <apex:outputText value="{!invoice.BillingPostalCode__c}"/> <apex:outputText value="{!invoice.BillingCity__c}"/><br/>
@@ -108,10 +108,15 @@
                 <table class="meta-row"><tr><td>Date d’échéance</td><td><apex:outputText value="{0,date,dd/MM/yyyy}"><apex:param value="{!invoice.DueDate__c}"/></apex:outputText></td></tr></table>
                 <apex:outputPanel rendered="{!hasBillingPeriod}" layout="none"><table class="meta-row"><tr><td>Période facturée</td><td><apex:outputText value="{0,date,dd/MM/yyyy}"><apex:param value="{!invoice.BillingPeriodStart__c}"/></apex:outputText><br/>au <apex:outputText value="{0,date,dd/MM/yyyy}"><apex:param value="{!invoice.BillingPeriodEnd__c}"/></apex:outputText></td></tr></table></apex:outputPanel>
                 <apex:outputPanel rendered="{!NOT(ISBLANK(invoice.CommitmentNumber__c))}" layout="none"><table class="meta-row"><tr><td>Commande / engagement</td><td><apex:outputText value="{!invoice.CommitmentNumber__c}"/></td></tr></table></apex:outputPanel>
+                <apex:outputPanel rendered="{!invoice.DocumentType__c = 'CreditNote'}" layout="none"><table class="meta-row"><tr><td>Facture d’origine</td><td><apex:outputText value="{!invoice.OriginalInvoice__r.InvoiceNumber__c}"/></td></tr></table></apex:outputPanel>
                 <table class="meta-row"><tr><td>Nature</td><td><apex:outputText value="{!operationCategoryLabel}"/></td></tr></table>
             </td>
         </tr>
     </table>
+
+    <apex:outputPanel rendered="{!invoice.DocumentType__c = 'CreditNote'}" layout="block" styleClass="routing" style="border-left-color: {!primaryColor};">
+        <strong>Motif de l’avoir</strong> · <apex:outputText value="{!invoice.CreditReason__c}"/>
+    </apex:outputPanel>
 
     <apex:outputPanel rendered="{!invoice.RecipientType__c = 'PublicSector'}" layout="block" styleClass="routing" style="border-left-color: {!primaryColor};">
         <strong>Routage Chorus Pro</strong> · SIRET destinataire&nbsp;<apex:outputText value="{!invoice.RecipientSiret__c}"/>
@@ -131,16 +136,16 @@
     <table class="settlement" width="100%">
         <tr>
             <td class="payment" width="48%" style="border-left-color: {!primaryColor};">
-                <div class="label">Règlement</div>
-                <div class="payment-title">À régler au plus tard le&nbsp;<apex:outputText value="{0,date,dd/MM/yyyy}"><apex:param value="{!invoice.DueDate__c}"/></apex:outputText></div>
-                <apex:outputPanel rendered="{!NOT(ISBLANK(invoice.BillingEntity__r.PaymentInstructions__c))}" layout="block" styleClass="payment-copy"><apex:outputText value="{!invoice.BillingEntity__r.PaymentInstructions__c}"/></apex:outputPanel>
+                <div class="label"><apex:outputText value="{!settlementLabel}"/></div>
+                <div class="payment-title"><apex:outputText value="{!settlementTitle}"/></div>
+                <apex:outputPanel rendered="{!AND(invoice.DocumentType__c = 'Invoice', NOT(ISBLANK(invoice.BillingEntity__r.PaymentInstructions__c)))}" layout="block" styleClass="payment-copy"><apex:outputText value="{!invoice.BillingEntity__r.PaymentInstructions__c}"/></apex:outputPanel>
             </td>
             <td class="totals-gap" width="5%"></td>
             <td class="totals-wrap" width="47%">
                 <table class="totals" width="100%">
                     <tr><td>Total HT</td><td><apex:outputText value="{!subtotalLabel}"/></td></tr>
                     <apex:repeat value="{!taxSummaries}" var="tax"><tr><td>TVA <apex:outputText value="{!tax.rateLabel}"/></td><td><apex:outputText value="{!tax.taxAmountLabel}"/></td></tr></apex:repeat>
-                    <tr class="total-due" style="background-color: {!primaryColor};"><td>Total TTC</td><td><apex:outputText value="{!totalLabel}"/></td></tr>
+                    <tr class="total-due" style="background-color: {!primaryColor};"><td><apex:outputText value="{!grandTotalLabel}"/></td><td><apex:outputText value="{!totalLabel}"/></td></tr>
                 </table>
             </td>
         </tr>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>CreditNoteRequiresOriginal</fullName>
+    <active>true</active>
+    <errorConditionFormula>AND(ISPICKVAL(DocumentType__c, "CreditNote"), ISBLANK(OriginalInvoice__c))</errorConditionFormula>
+    <errorMessage>Un avoir doit référencer la facture d’origine.</errorMessage>
+</ValidationRule>

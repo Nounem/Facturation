@@ -13,6 +13,7 @@ L’application fournit un cycle de facturation natif dans Salesforce :
 - facturation planifiée selon une règle ponctuelle ou récurrente ;
 - calcul des montants HT, TVA, TTC, règlements et solde ;
 - émission, numérotation et verrouillage des factures ;
+- création d’avoirs complets ou partiels avec numérotation dédiée ;
 - génération d’un PDF versionné dans Salesforce Files ;
 - préparation et traçabilité de la facturation électronique.
 
@@ -64,6 +65,7 @@ erDiagram
     BILLING_RULE o|--o{ INVOICE : appliquee
     BILLING_ENTITY ||--o{ INVOICE : emet
     INVOICE ||--|{ INVOICE_LINE : contient
+    INVOICE o|--o{ INVOICE : corrige_par_avoir
     INVOICE ||--o{ PAYMENT : regle
     INVOICE ||--o{ E_INVOICE_TRANSMISSION : transmet
     BILLING_ENTITY ||--o{ NUMBERING_SEQUENCE : numerote
@@ -75,7 +77,7 @@ erDiagram
 |---|---|---|
 | `Opportunity` | Source commerciale | Produits, règle, prochaine date et état de planification |
 | `Quote` / `QuoteLineItem` | Devis standard | TVA et données de routage ajoutées par champs personnalisés |
-| `Invoice__c` | Document comptable | Snapshot client, origine, période, montants, verrouillage |
+| `Invoice__c` | Facture ou avoir | Snapshot client, origine, période, facture corrigée, montants, verrouillage |
 | `InvoiceLine__c` | Ligne de facture | Quantité, prix, remise, TVA et montants calculés |
 | `BillingRule__c` | Règle de facturation | Fréquence, terme, frontière, jour, délai et émission automatique |
 | `BillingEntity__c` | Émetteur juridique | Identité, logo, couleur, paiement et mentions légales |
@@ -90,7 +92,8 @@ erDiagram
 
 - `Quote` : conversion d’un devis accepté ;
 - `Direct` : création manuelle depuis l’opportunité ;
-- `Scheduled` : création par le moteur planifié.
+- `Scheduled` : création par le moteur planifié ;
+- `CreditNote` : avoir créé depuis une facture émise.
 
 `SourceQuote__c` reste nul pour les factures directes et planifiées.
 
@@ -117,7 +120,9 @@ couleur hexadécimale et les mentions du document.
 | Classe | Responsabilité |
 |---|---|
 | `BillingWorkspaceController` | Façade LWC et traduction des erreurs métier |
-| `InvoiceService` | Conversion, création directe, émission et verrouillage |
+| `InvoiceService` | Conversion, création directe, avoir, émission et verrouillage |
+| `InvoiceValidationService` | Contrôles juridiques et métier avant numérotation |
+| `BillingSecurity` | Contrôles CRUD/FLS aux frontières Lightning |
 | `BillingCalculationService` | Calcul déterministe des lignes et totaux |
 | `BillingRuleEngine` | Périodes à échoir/échues et prochaine échéance |
 | `BillingRunScheduler` | Déclenchement quotidien du batch |
@@ -160,6 +165,21 @@ Une facture émise devient immuable. Le PDF est donc généré après émission.
 nouvelle génération crée une nouvelle `ContentVersion` dans le même
 `ContentDocument`, ce qui conserve l’historique sans multiplier les fichiers.
 
+### Avoir complet ou partiel
+
+1. **Créer un avoir** est disponible uniquement sur une facture émise dont un
+   montant reste créditable.
+2. Le brouillon reprend le snapshot client et les lignes de la facture d’origine.
+3. L’utilisateur peut réduire ou supprimer les lignes avant émission pour un
+   avoir partiel et renseigne le motif.
+4. L’émission verrouille simultanément l’avoir et la facture d’origine, contrôle
+   le montant restant, puis attribue un numéro de la séquence `CreditNote`.
+5. Le montant crédité, le solde et le statut de la facture d’origine sont mis à
+   jour. Le document émis d’origine reste immuable.
+
+Le PDF d’un avoir porte le titre **AVOIR**, le numéro de facture corrigée, le
+motif et le montant porté au crédit du client.
+
 ### Facturation planifiée
 
 La tâche `Facturation quotidienne` exécute `BillingDueBatch` à 02:00. Seules les
@@ -193,6 +213,11 @@ semestrielle et annuelle. Deux logiques sont combinables :
 - Une règle inactive ne peut pas être appliquée.
 - L’activation d’une planification exige une règle et une prochaine date.
 - Une facture sans ligne ne peut pas être émise.
+- Avant numérotation, l’émetteur, le client, les mentions de paiement, la date de
+  prestation et chaque ligne sont validés par `InvoiceValidationService`.
+- Un avoir doit référencer une facture émise et ne peut pas dépasser le montant
+  restant à créditer.
+- Un paiement ne peut pas être enregistré sur un avoir.
 - Les erreurs DML détaillées sont remontées jusqu’au toast Lightning.
 - Le batch utilise une taille de 5 pour rester sous les limites de requêtes tout
   en isolant les erreurs métier.
@@ -200,6 +225,8 @@ semestrielle et annuelle. Deux logiques sont combinables :
 ## 7. Sécurité
 
 - Toutes les classes de façade et de service sont déclarées `with sharing`.
+- Les méthodes exposées au LWC vérifient les droits CRUD nécessaires ; les
+  lectures renvoyées à l’interface vérifient aussi les champs essentiels.
 - `Facturation_Admin` fournit les droits objets, champs, classes, page et onglets.
 - Les secrets Salesforce CLI ne doivent jamais être versionnés ; `.sf`, `.sfdx`,
   fichiers d’authentification et clés sont exclus par `.gitignore`.
@@ -208,8 +235,9 @@ semestrielle et annuelle. Deux logiques sont combinables :
   déploiements avec jobs Apex actifs dans **Deployment Settings** ; le workflow
   ne désactive jamais silencieusement la facturation.
 - Aucun credential Chorus Pro n’est stocké dans le dépôt.
-- Une revue FLS/CRUD renforcée est recommandée avant exposition à des profils
-  non administrateurs ou à une communauté externe.
+- Les services internes exécutés aussi par le batch utilisent un modèle de
+  champs contrôlé par le code ; toute nouvelle méthode `@AuraEnabled` doit passer
+  par la même façade de sécurité.
 
 ## 8. Facturation électronique
 
@@ -236,6 +264,8 @@ Les tests couvrent notamment :
 - règles à échoir et à terme échu ;
 - batch de génération planifiée ;
 - émission, numérotation et immutabilité ;
+- validation pré-émission avec message exploitable ;
+- avoir complet, avoir partiel et recalcul du solde ;
 - encaissement et mise à jour du solde ;
 - génération/versionnement PDF ;
 - routage e-facture privé et public ;
@@ -248,6 +278,7 @@ Commande ciblée :
 sf apex run test \
   --tests BillingCalculationServiceTest \
   --tests BillingBrandingControllerTest \
+  --tests BillingSecurityTest \
   --tests BillingRuleEngineTest \
   --tests BillingRunSchedulerTest \
   --tests BillingWorkspaceControllerTest \
@@ -262,12 +293,12 @@ Contrôles quotidiens recommandés :
 1. tâches planifiées et batchs en erreur dans **Setup > Apex Jobs** ;
 2. opportunités dont `LastBillingError__c` n’est pas vide ;
 3. factures brouillon anciennes ;
-4. séquence disponible pour l’année courante ;
+4. séquences facture et avoir disponibles pour l’année courante ;
 5. transmissions électroniques en échec ou bloquées ;
 6. complétude juridique de l’entité de facturation.
 
-Au changement d’année, créer une `NumberingSequence__c` par entité avant la
-première émission. Après modification du logo ou des mentions, régénérer le PDF
+Au changement d’année, créer les séquences `Invoice` et `CreditNote` par entité
+avant la première émission. Après modification du logo ou des mentions, régénérer le PDF
 des factures concernées uniquement si la politique comptable l’autorise.
 
 ## 11. Limites connues et évolutions
@@ -275,8 +306,6 @@ des factures concernées uniquement si la politique comptable l’autorise.
 - Une règle facture actuellement l’ensemble des produits de l’opportunité à
   chaque période ; un futur modèle de contrat permettra des dates et quantités
   différentes par ligne.
-- Les avoirs et annulations sont représentés par statut mais ne possèdent pas
-  encore un document d’avoir complet avec numérotation dédiée.
 - La relance client, le prélèvement, l’allocation multi-paiements et la
   reconnaissance de revenu ne sont pas inclus.
 - Le PDF repose sur le moteur Visualforce historique, fiable pour l’impression

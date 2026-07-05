@@ -5,6 +5,7 @@ import load from '@salesforce/apex/BillingWorkspaceController.load';
 import createQuoteFromOpportunity from '@salesforce/apex/BillingWorkspaceController.createQuoteFromOpportunity';
 import createInvoiceFromOpportunity from '@salesforce/apex/BillingWorkspaceController.createInvoiceFromOpportunity';
 import convertQuoteToInvoice from '@salesforce/apex/BillingWorkspaceController.convertQuoteToInvoice';
+import createCreditNote from '@salesforce/apex/BillingWorkspaceController.createCreditNote';
 import issueInvoice from '@salesforce/apex/BillingWorkspaceController.issueInvoice';
 import generateInvoicePdf from '@salesforce/apex/InvoicePdfController.generateAndAttach';
 import prepareElectronicInvoice from '@salesforce/apex/BillingWorkspaceController.prepareElectronicInvoice';
@@ -15,7 +16,8 @@ const INVOICE_STATUS_LABELS = {
     Sent: 'Envoyée',
     PartiallyPaid: 'Partiellement payée',
     Paid: 'Payée',
-    Credited: 'Annulée par avoir'
+    Credited: 'Annulée par avoir',
+    PartiallyCredited: 'Partiellement créditée'
 };
 
 const QUOTE_STATUS_LABELS = {
@@ -81,6 +83,10 @@ export default class BillingWorkspace extends NavigationMixin(LightningElement) 
     }
 
     get invoiceCount() {
+        return this.invoices.filter((invoice) => invoice.DocumentType__c !== 'CreditNote').length;
+    }
+
+    get billingDocumentCount() {
         return this.invoices.length;
     }
 
@@ -166,21 +172,27 @@ export default class BillingWorkspace extends NavigationMixin(LightningElement) 
             Direct: 'Facture directe',
             Scheduled: 'Facturation planifiée'
         };
+        const isCreditNote = invoice.DocumentType__c === 'CreditNote';
+        const creditedAmount = invoice.CreditedAmount__c || 0;
         return {
             ...invoice,
             displayNumber: invoice.InvoiceNumber__c || invoice.Name,
             statusLabel: INVOICE_STATUS_LABELS[invoice.Status__c] || invoice.Status__c,
             statusClass: this.statusClass(invoice.Status__c),
-            sourceLabel: sourceLabels[invoice.Origin__c] || 'Facture',
+            sourceLabel: isCreditNote
+                ? `Avoir sur ${invoice.OriginalInvoice__r?.InvoiceNumber__c || 'facture'}`
+                : (sourceLabels[invoice.Origin__c] || 'Facture'),
             canIssue: !invoice.IsLocked__c,
-            canGenerateDocuments: invoice.IsLocked__c
+            canGenerateDocuments: invoice.IsLocked__c,
+            canCreateCreditNote: !isCreditNote && invoice.IsLocked__c &&
+                creditedAmount < (invoice.TotalAmount__c || 0)
         };
     }
 
     statusClass(status) {
         if (['Accepted', 'Approved', 'Paid'].includes(status)) return 'status status-success';
         if (['Rejected', 'Denied'].includes(status)) return 'status status-error';
-        if (['Needs Review', 'In Review', 'PartiallyPaid'].includes(status)) {
+        if (['Needs Review', 'In Review', 'PartiallyPaid', 'PartiallyCredited'].includes(status)) {
             return 'status status-warning';
         }
         if (['Issued', 'Sent', 'Presented'].includes(status)) return 'status status-info';
@@ -252,6 +264,14 @@ export default class BillingWorkspace extends NavigationMixin(LightningElement) 
             'La facture brouillon est disponible.'
         );
         if (invoiceId) this.activeView = 'invoices';
+    }
+
+    async handleCreateCreditNote(event) {
+        const creditNoteId = await this.runAction(
+            () => createCreditNote({ invoiceId: event.currentTarget.dataset.id }),
+            'L’avoir brouillon est prêt. Contrôlez son motif et ses lignes avant émission.'
+        );
+        if (creditNoteId) this.activeView = 'invoices';
     }
 
     async handleIssueInvoice(event) {

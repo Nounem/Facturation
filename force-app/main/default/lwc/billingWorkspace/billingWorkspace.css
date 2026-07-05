@@ -46,7 +46,7 @@
 .record-data { color: #444; font-size: .8rem; }
 .align-right { text-align: right; }
 .balance { color: #8c4b02; }
-.row-actions { display: flex; align-items: center; justify-content: flex-end; gap: .45rem; }
+.row-actions { display: flex; align-items: center; justify-content: flex-end; gap: .45rem; flex-wrap: wrap; }
 .mobile-label { display: none; }
 .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 15rem; padding: 2rem; text-align: center; color: #5f6670; }
 .empty-state.standalone { min-height: 22rem; background: white; }

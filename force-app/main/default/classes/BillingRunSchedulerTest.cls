@@ -1,6 +1,15 @@
 @IsTest
 private class BillingRunSchedulerTest {
     @IsTest
+    static void schedulerStartsTheDailyBatch() {
+        Test.startTest();
+        new BillingRunScheduler().execute(null);
+        Test.stopTest();
+
+        System.assertEquals(0, [SELECT COUNT() FROM Invoice__c]);
+    }
+
+    @IsTest
     static void generatesOnlyOneInvoiceForADuePeriod() {
         Account account = new Account(
             Name = 'Client récurrent',

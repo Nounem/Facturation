@@ -17,7 +17,7 @@ style: |
 
 ## Du devis à la facture électronique, dans un espace unique
 
-Devis · Facture directe · Récurrence · PDF · Paiements · E-facture
+Devis · Facture directe · Récurrence · Avoirs · PDF · Paiements · E-facture
 
 <!--
 Notes orateur — 30 secondes
@@ -54,6 +54,7 @@ que l’outil doit rester simple sans sacrifier la numérotation ni l’historiq
 | Récurrence | Règles inspirées de Revenue Cloud |
 | Document client | PDF versionné et personnalisable |
 | Encaissement | Paiements, solde et statut |
+| Correction comptable | Avoir complet ou partiel, sans altérer la facture |
 | Secteur public | Préparation du routage Chorus Pro |
 
 <!--
@@ -82,7 +83,7 @@ et Facture directe, puis les onglets et les indicateurs.
 
 ---
 
-# Trois chemins vers la facture
+# Trois chemins vers la facture, puis l’avoir
 
 ```text
 Devis accepté ────────────────┐
@@ -90,6 +91,8 @@ Devis accepté ────────────────┐
 Produits de l’opportunité ────┤
                              │
 Règle + prochaine date ───────┘
+
+Facture émise ───────────────────> Avoir brouillon -> Émission -> PDF
 ```
 
 - **Quote** : traçabilité du devis d’origine.
@@ -129,7 +132,8 @@ période du 1er au 30 juin et place la prochaine date au 1er août.
 2. Les montants HT, TVA et TTC sont recalculés par le serveur.
 3. Le numéro définitif est attribué uniquement à l’émission.
 4. La facture émise est verrouillée.
-5. Chaque régénération PDF ajoute une version au même fichier.
+5. Toute correction passe par un avoir numéroté et traçable.
+6. Chaque régénération PDF ajoute une version au même fichier.
 
 **Résultat :** historique lisible, numérotation protégée et document reproductible.
 
@@ -150,6 +154,7 @@ facture. C’est la raison du snapshot client.
 - Tableau stable des lignes et totaux français.
 - Paiement, pénalités, indemnité et mentions légales.
 - Bloc de routage Chorus Pro pour le secteur public.
+- Mise en page dédiée aux avoirs avec facture d’origine et motif.
 
 <!--
 Notes orateur — 40 secondes
@@ -190,7 +195,10 @@ reste bloqué tant que la connexion et la conformité ne sont pas certifiées.
 - Scheduler + Batch pour la récurrence.
 - Visualforce pour le PDF serveur.
 - Permission Set unique pour l’administration.
-- **20 tests ciblés réussis à 100 %** lors de la livraison.
+- Contrôles CRUD/FLS aux frontières Lightning.
+- Validation des mentions obligatoires avant toute numérotation.
+- **26 tests projet réussis à 100 %**, avec environ **83 % de couverture** des
+  classes applicatives.
 
 <!--
 Notes orateur — 45 secondes
@@ -230,8 +238,9 @@ la production et laisse une trace de la version, des tests et de l’approbation
 3. Vérifier les lignes et émettre la facture.
 4. Générer le PDF.
 5. Ajouter un paiement et observer le solde.
-6. Configurer une règle mensuelle.
-7. Montrer l’historique des transmissions électroniques.
+6. Créer un avoir partiel et observer le nouveau solde.
+7. Configurer une règle mensuelle.
+8. Montrer l’historique des transmissions électroniques.
 
 **Durée cible : 6 minutes.**
 
@@ -253,7 +262,6 @@ de dépendre d’un appel Chorus réel pendant la démonstration.
 
 ### Évolutions
 
-- avoirs complets et numérotation dédiée ;
 - contrats et dates de facturation par ligne ;
 - relances et prélèvements ;
 - portail client et suivi de paiement.

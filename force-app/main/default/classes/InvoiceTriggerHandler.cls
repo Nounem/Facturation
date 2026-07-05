@@ -8,6 +8,9 @@ public with sharing class InvoiceTriggerHandler {
                 currentRecord.BillingEntity__c != oldRecord.BillingEntity__c ||
                 currentRecord.Opportunity__c != oldRecord.Opportunity__c ||
                 currentRecord.SourceQuote__c != oldRecord.SourceQuote__c ||
+                currentRecord.DocumentType__c != oldRecord.DocumentType__c ||
+                currentRecord.OriginalInvoice__c != oldRecord.OriginalInvoice__c ||
+                currentRecord.CreditReason__c != oldRecord.CreditReason__c ||
                 currentRecord.RecipientType__c != oldRecord.RecipientType__c ||
                 currentRecord.RecipientSiret__c != oldRecord.RecipientSiret__c ||
                 currentRecord.CommitmentNumber__c != oldRecord.CommitmentNumber__c ||

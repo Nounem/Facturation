@@ -18,7 +18,7 @@
             <header class="hero">
                 <div class="hero-copy">
                     <div class="eyebrow">ESPACE DE FACTURATION</div>
-                    <h1>Devis &amp; factures</h1>
+                    <h1>Devis, factures &amp; avoirs</h1>
                     <p class="opportunity-name">{opportunityName}</p>
                 </div>
                 <div class="hero-actions">
@@ -109,7 +109,7 @@
                             Devis <span class="count">{quoteCount}</span>
                         </button>
                         <button class={invoicesTabClass} data-view="invoices" onclick={handleViewChange} aria-selected={isInvoicesActive}>
-                            Factures <span class="count">{invoiceCount}</span>
+                            Factures &amp; avoirs <span class="count">{billingDocumentCount}</span>
                         </button>
                     </nav>
                     <div class="search-box">
@@ -178,6 +178,9 @@
                                         <template if:true={invoice.canGenerateDocuments}>
                                             <lightning-button label="PDF" icon-name="utility:download" variant="brand-outline" data-id={invoice.Id} onclick={handleGeneratePdf} disabled={isBusy}></lightning-button>
                                             <lightning-button label="E-facture" icon-name="utility:send" data-id={invoice.Id} onclick={handlePrepareElectronicInvoice} disabled={isBusy}></lightning-button>
+                                        </template>
+                                        <template if:true={invoice.canCreateCreditNote}>
+                                            <lightning-button label="Créer un avoir" icon-name="utility:replace" data-id={invoice.Id} onclick={handleCreateCreditNote} disabled={isBusy}></lightning-button>
                                         </template>
                                     </div>
                                 </article>
